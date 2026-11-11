@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d6e6e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sau PCI">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Quản lý bệnh nhân sau PCI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: input rail left, recommendation board right (ESC | ACC/AHA side by side) */
+  --bg:#f3f5f7; --surface:#ffffff; --ink:#152033; --muted:#5b6678; --line:#dde2e8; --accent:#0d6e6e; --accent-soft:#e2f1f0;
+  --esc:#1f4f9c; --esc-soft:#e6eefb; --aha:#b4232f; --aha-soft:#fbe9ea;
+  --ok:#1d7a46; --ok-soft:#e3f3e9; --warn:#a86207; --warn-soft:#fdf1df; --bad:#b42318; --bad-soft:#fde8e6; --info:#6b7686; --info-soft:#eef1f4;
+  --c1:#1d7a46; --c2a:#5f8a12; --c2b:#b07a09; --c3:#b42318;
+  --font:"Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r:10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f141b; --surface:#171e27; --ink:#e7ecf2; --muted:#9aa6b6; --line:#2a3440; --accent:#4fb7b2; --accent-soft:#16302f;
+    --esc:#7fa8ec; --esc-soft:#18263d; --aha:#f08a91; --aha-soft:#3a1c20;
+    --ok:#5fcf8d; --ok-soft:#14301f; --warn:#f1b24a; --warn-soft:#352612; --bad:#ff8a7f; --bad-soft:#3b1a17; --info:#9aa6b6; --info-soft:#1f2832;
+    --c1:#5fcf8d; --c2a:#a9d65a; --c2b:#f1b24a; --c3:#ff8a7f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f141b; --surface:#171e27; --ink:#e7ecf2; --muted:#9aa6b6; --line:#2a3440; --accent:#4fb7b2; --accent-soft:#16302f;
+  --esc:#7fa8ec; --esc-soft:#18263d; --aha:#f08a91; --aha-soft:#3a1c20;
+  --ok:#5fcf8d; --ok-soft:#14301f; --warn:#f1b24a; --warn-soft:#352612; --bad:#ff8a7f; --bad-soft:#3b1a17; --info:#9aa6b6; --info-soft:#1f2832;
+  --c1:#5fcf8d; --c2a:#a9d65a; --c2b:#f1b24a; --c3:#ff8a7f;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg); color:var(--ink); font-family:var(--font); font-size:15px; line-height:1.5; font-variant-numeric:tabular-nums;}
+button,input,select{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+header.top{position:relative; z-index:20; background:var(--surface); border-bottom:1px solid var(--line); padding:10px 16px; display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; justify-content:space-between}
+.brand h1{font-size:18px; margin:0; font-weight:700; letter-spacing:-.01em; text-wrap:balance}
+.brand p{margin:0; color:var(--muted); font-size:12.5px}
+.tools{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.seg{display:inline-flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; background:var(--bg)}
+.seg button{border:0; background:transparent; padding:6px 12px; cursor:pointer; font-size:13px; font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--ink); color:var(--surface)}
+.btn{border:1px solid var(--line); background:var(--surface); border-radius:999px; padding:6px 12px; cursor:pointer; font-size:13px; font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+main{display:grid; grid-template-columns: minmax(330px, 420px) 1fr; gap:16px; padding:16px; max-width:1500px; margin:0 auto}
+@media (max-width: 980px){ main{grid-template-columns:1fr} }
+@media (min-width: 981px){ header.top{position:sticky; top:0} }
+.rail{display:flex; flex-direction:column; gap:10px}
+@media (min-width: 981px){ .rail{position:sticky; top:72px; max-height:calc(100vh - 88px); overflow:auto; padding-right:4px} }
+details.sec{background:var(--surface); border:1px solid var(--line); border-radius:var(--r)}
+details.sec > summary{list-style:none; cursor:pointer; padding:10px 14px; font-weight:600; display:flex; justify-content:space-between; align-items:center; gap:8px}
+details.sec > summary::-webkit-details-marker{display:none}
+details.sec > summary .sum{font-weight:400; color:var(--muted); font-size:12.5px; text-align:right}
+details.sec > summary::after{content:"▾"; color:var(--muted); font-size:12px}
+details.sec:not([open]) > summary::after{content:"▸"}
+.secbody{padding:2px 14px 14px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--line)}
+.field{display:flex; flex-direction:column; gap:6px; padding-top:10px}
+.field > label, .field > .lab{font-size:12.5px; color:var(--muted); font-weight:500}
+.chips{display:flex; flex-wrap:wrap; gap:6px}
+.chip{border:1px solid var(--line); background:var(--bg); border-radius:999px; padding:5px 11px; font-size:13px; cursor:pointer; line-height:1.3; text-align:left}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent); color:var(--ink); font-weight:600}
+.row{display:grid; grid-template-columns:repeat(auto-fit, minmax(110px,1fr)); gap:8px}
+.inp{display:flex; flex-direction:column; gap:4px}
+.inp span{font-size:12px; color:var(--muted)}
+.inp input, .inp select{border:1px solid var(--line); background:var(--bg); border-radius:8px; padding:7px 9px; width:100%}
+.hint{font-size:12px; color:var(--muted); margin:0}
+.calc{font-size:12.5px; background:var(--accent-soft); border-radius:8px; padding:6px 9px}
+.board{display:flex; flex-direction:column; gap:14px; min-width:0}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:14px 16px}
+.card h2{font-size:16px; margin:0 0 10px; text-wrap:balance}
+.card h3{font-size:14px; margin:14px 0 8px}
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px}
+.tile{border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:var(--bg)}
+.tile .k{font-size:12px; color:var(--muted); font-weight:600}
+.tile .v{font-size:18px; font-weight:700}
+.tile .s{font-size:12px; color:var(--muted)}
+.pill{display:inline-block; border-radius:999px; padding:1px 8px; font-size:12px; font-weight:600}
+.p-ok{background:var(--ok-soft); color:var(--ok)} .p-warn{background:var(--warn-soft); color:var(--warn)} .p-bad{background:var(--bad-soft); color:var(--bad)} .p-info{background:var(--info-soft); color:var(--info)}
+table.tg{width:100%; border-collapse:collapse; font-size:13.5px}
+table.tg th, table.tg td{border-bottom:1px solid var(--line); padding:7px 6px; text-align:left; vertical-align:top}
+table.tg th{font-size:12px; color:var(--muted); font-weight:600}
+.tablewrap{overflow-x:auto}
+.warns{display:flex; flex-direction:column; gap:6px; margin:0; padding:0; list-style:none}
+.warns li{border-left:4px solid var(--warn); background:var(--warn-soft); padding:7px 10px; border-radius:6px; font-size:13.5px}
+.warns li.no{border-color:var(--bad); background:var(--bad-soft)}
+.warns li .refs{display:block; font-size:12px; color:var(--muted); margin-top:2px}
+.tabs{display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:0}
+.tab{border:0; background:transparent; padding:8px 12px; cursor:pointer; font-weight:600; font-size:13.5px; color:var(--muted); border-bottom:3px solid transparent; margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent)}
+.tab .n{font-weight:500; font-size:11.5px; color:var(--muted); margin-left:4px}
+.cols{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:12px}
+.cols.one{grid-template-columns:1fr}
+@media (max-width: 760px){ .cols{grid-template-columns:1fr} }
+.colhead{display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; padding:6px 10px; border-radius:8px}
+.colhead.esc{background:var(--esc-soft); color:var(--esc)} .colhead.aha{background:var(--aha-soft); color:var(--aha)}
+.recs{display:flex; flex-direction:column; gap:8px; margin-top:8px}
+.rec{border:1px solid var(--line); border-left-width:5px; border-radius:8px; padding:8px 10px; background:var(--surface)}
+.rec.do{border-left-color:var(--ok)} .rec.opt{border-left-color:var(--c2b)} .rec.no{border-left-color:var(--bad)} .rec.info{border-left-color:var(--line); opacity:.86}
+.rec .bd{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:4px}
+.soc{font-size:11px; font-weight:700; border-radius:4px; padding:1px 6px; color:#fff}
+.soc.esc{background:var(--esc)} .soc.aha{background:var(--aha)}
+.cor{font-size:12px; font-weight:700; border-radius:4px; padding:1px 7px; border:1.5px solid currentColor}
+.cor.c1{color:var(--c1)} .cor.c2a{color:var(--c2a)} .cor.c2b{color:var(--c2b)} .cor.c3{color:var(--c3)}
+.loe{font-size:12px; font-weight:600; color:var(--muted)}
+.st{font-size:11.5px; font-weight:600; margin-left:auto}
+.st.do{color:var(--ok)} .st.opt{color:var(--c2b)} .st.no{color:var(--bad)} .st.info{color:var(--muted)}
+.rec p{margin:0; font-size:13.5px}
+.rec .src{font-size:11.5px; color:var(--muted); margin-top:3px}
+.rec .why{font-size:12px; color:var(--accent); font-weight:500}
+.note{font-size:13px; background:var(--info-soft); border-radius:8px; padding:8px 10px; margin:8px 0 0}
+.tl{display:flex; flex-direction:column; gap:8px; margin-top:6px}
+.lane{display:grid; grid-template-columns:70px 1fr; align-items:center; gap:8px}
+.lane .ln{font-size:12px; font-weight:700}
+.track{position:relative; height:38px; background:var(--bg); border:1px solid var(--line); border-radius:6px; overflow:hidden}
+.seg2{position:absolute; top:0; bottom:0; display:flex; align-items:center; padding:0 6px; font-size:11.5px; font-weight:600; overflow:hidden; border-right:2px solid var(--surface); line-height:1.15}
+.seg2.tri{background:#c2410c33} .seg2.dapt{background:#0d6e6e33} .seg2.dual{background:#6d28d933} .seg2.sapt{background:#2563eb26} .seg2.oac{background:#64748b33}
+.marker{position:absolute; top:-2px; bottom:-2px; width:3px; background:var(--ink); border-radius:2px}
+.ticks{position:relative; height:16px; margin-left:78px; font-size:11px; color:var(--muted)}
+.ticks span{position:absolute; transform:translateX(-50%); white-space:nowrap}
+.legend{display:flex; flex-wrap:wrap; gap:10px; font-size:12px; color:var(--muted)}
+.legend b{font-weight:600}
+.small{font-size:12.5px; color:var(--muted)}
+ul.plain{margin:6px 0 0; padding-left:18px; font-size:13.5px}
+.disc{font-size:12px; color:var(--muted); border-top:1px dashed var(--line); padding-top:8px; margin-top:10px}
+.jump{position:fixed; right:14px; bottom:14px; z-index:30; display:none}
+@media (max-width: 980px){ .jump{display:inline-block} }
+.toast{position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:var(--ink); color:var(--surface); padding:8px 14px; border-radius:999px; font-size:13px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:40}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion: reduce){ .toast{transition:none} }
+.srcs li{margin-bottom:6px; font-size:13px}
+#printArea{display:none}
+#pdfsrc{position:fixed; left:-12000px; top:0; width:704px; background:#fff}
+.pv{position:fixed; inset:0; z-index:50; background:rgba(20,28,32,.72); display:flex; flex-direction:column}
+.pv[hidden]{display:none}
+.pvbar{display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--surface); border-bottom:1px solid var(--line)}
+.pvbar b{flex:1; font-size:15px}
+.pvbar .pvinfo{color:var(--muted); font-size:12.5px; font-weight:400; margin-left:6px}
+.pvbody{flex:1; overflow:auto; padding:18px 10px 40px; display:flex; flex-direction:column; align-items:center; gap:14px}
+.pvbody img{width:100%; max-width:794px; background:#fff; box-shadow:0 2px 14px rgba(0,0,0,.35); border-radius:2px}
+.pvbody .pvmsg{color:#fff; margin-top:40px; font-size:14px}
+.dsub{font-size:13.5px; margin:10px 0 4px; color:var(--muted)}
+.dgrp{margin-top:14px; border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:var(--surface)}
+.dgrp.rel{border-left:5px solid var(--accent)}
+.dgrp h3{margin:0 0 8px; display:flex; flex-wrap:wrap; gap:6px; align-items:center}
+.dgrp.dim{opacity:.72}
+.gsec{margin-top:14px}
+.gsec h3{display:flex; align-items:center; gap:8px; margin:0 0 8px}
+.gsec h3 .tag{font-size:11.5px; font-weight:600; padding:1px 8px; border-radius:999px; background:var(--accent-soft); color:var(--accent)}
+.glist{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
+.glist li{border:1px solid var(--line); border-radius:8px; padding:9px 11px; background:var(--surface)}
+.gsec.now .glist li{border-left:5px solid var(--ok)}
+.gsec.next .glist li{border-left:5px solid var(--esc)}
+.glist p{margin:0 0 5px; font-size:14px}
+.refs2{display:flex; flex-wrap:wrap; gap:5px}
+.rb{font-size:11.5px; font-weight:600; border-radius:4px; padding:1px 6px; border:1px solid currentColor; white-space:nowrap}
+.rb.esc{color:var(--esc)} .rb.aha{color:var(--aha)} .rb.tbl{color:var(--muted); font-weight:500}
+@media print{
+  body{background:#fff}
+  header.top, main, .jump, .toast{display:none !important}
+  #printArea{display:block}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Quản lý bệnh nhân sau PCI</h1>
+    <p>Khuyến cáo ESC và ACC/AHA song song · mức khuyến cáo (COR) và mức bằng chứng (LOE)</p>
+  </div>
+  <div class="tools">
+    <button type="button" class="btn" id="reset">Làm mới</button>
+    <button type="button" class="btn primary" id="print">In kết quả</button>
+  </div>
+</header>
+<main>
+  <aside class="rail" id="rail" aria-label="Đặc điểm bệnh nhân"></aside>
+  <section class="board" id="board" aria-live="polite"></section>
+</main>
+<a href="#board" class="btn primary jump" id="jump">Xem khuyến cáo ↓</a>
+<div class="toast" id="toast" role="status"></div>
+<div id="printArea" aria-hidden="true"></div>
+<div id="pdfsrc" aria-hidden="true"></div>
+<div class="pv" id="pv" hidden role="dialog" aria-modal="true" aria-labelledby="pvt">
+  <div class="pvbar"><b id="pvt">Xem trước PDF<span class="pvinfo" id="pvinfo"></span></b>
+    <button type="button" class="btn" id="pvclose">Đóng</button>
+    <button type="button" class="btn primary" id="pvsave" disabled>Lưu PDF</button></div>
+  <div class="pvbody" id="pvbody"></div>
+</div>
+<script>
+/* ===== ENGINE: pure functions, no DOM ===== */
+var GL = {
+  'ESC-ACS23': {s:'ESC', n:'ESC 2023 – Hội chứng vành cấp', c:'Byrne RA, et al. 2023 ESC Guidelines for the management of acute coronary syndromes. Eur Heart J 2023;44:3720–3826.'},
+  'ESC-CCS24': {s:'ESC', n:'ESC 2024 – Hội chứng vành mạn', c:'Vrints C, et al. 2024 ESC Guidelines for the management of chronic coronary syndromes. Eur Heart J 2024;45:3415–3537.'},
+  'ESC-AF24':  {s:'ESC', n:'ESC 2024 – Rung nhĩ', c:'Van Gelder IC, et al. 2024 ESC Guidelines for the management of atrial fibrillation (EACTS). Eur Heart J 2024;45:3314–3414.'},
+  'ESC-HTN24': {s:'ESC', n:'ESC 2024 – Tăng huyết áp', c:'McEvoy JW, et al. 2024 ESC Guidelines for the management of elevated blood pressure and hypertension. Eur Heart J 2024;45:3912–4018.'},
+  'ESC-LIP25': {s:'ESC', n:'ESC/EAS 2025 – Rối loạn lipid (cập nhật)', c:'Mach F, et al. 2025 Focused Update of the 2019 ESC/EAS Guidelines for the management of dyslipidaemias. Eur Heart J 2025.'},
+  'ESC-CKD26': {s:'ESC', n:'ESC/ERA 2026 – Bệnh tim mạch & bệnh thận mạn', c:'Damman K, Herrington WG, et al. 2026 ESC Guidelines for the management of cardiovascular disease and chronic kidney disease (ERA). Eur Heart J 2026; doi:10.1093/eurheartj/ehag098.'},
+  'ESC-HF26':  {s:'ESC', n:'ESC 2026 – Suy tim', c:'2026 ESC Guidelines for the management of heart failure. Eur Heart J 2026; doi:10.1093/eurheartj/ehag100.'},
+  'ESC-DM23':  {s:'ESC', n:'ESC 2023 – Bệnh tim mạch ở BN đái tháo đường (nguồn bổ sung)', c:'Marx N, Federici M, et al. 2023 ESC Guidelines for the management of cardiovascular disease in patients with diabetes. Eur Heart J 2023;44:4043–4140. (Nguồn ngoài 12 tài liệu được cung cấp.)'},
+  'AHA-ACS25': {s:'AHA', n:'ACC/AHA 2025 – Hội chứng vành cấp', c:'Rao SV, et al. 2025 ACC/AHA/ACEP/NAEMSP/SCAI Guideline for the Management of Patients With Acute Coronary Syndromes. J Am Coll Cardiol 2025.'},
+  'AHA-CCD23': {s:'AHA', n:'AHA/ACC 2023 – Bệnh mạch vành mạn', c:'Virani SS, et al. 2023 AHA/ACC/ACCP/ASPC/NLA/PCNA Guideline for the Management of Patients With Chronic Coronary Disease. J Am Coll Cardiol 2023;82:833–955.'},
+  'AHA-HTN25': {s:'AHA', n:'AHA/ACC 2025 – Tăng huyết áp', c:'Jones DW, et al. 2025 AHA/ACC/AANP/AAPA/ABC/ACCP/ACPM/AGS/AMA/ASPC/NMA/PCNA/SGIM Guideline for the Prevention, Detection, Evaluation and Management of High Blood Pressure in Adults. J Am Coll Cardiol 2025.'},
+  'AHA-LIP26': {s:'AHA', n:'ACC/AHA 2026 – Rối loạn lipid máu', c:'Blumenthal RS, et al. 2026 ACC/AHA Multisociety Guideline on the Management of Dyslipidemia. J Am Coll Cardiol 2026;87:2624–2757.'},
+  'AHA-CKM26': {s:'AHA', n:'AHA/ACC/ADA/ASN 2026 – Hội chứng tim mạch–thận–chuyển hoá (CKM)', c:'Ndumele CE, et al. 2026 AHA/ACC/ADA/ASN Guideline for the Prevention, Detection, Evaluation, and Management of Cardiovascular-Kidney-Metabolic Syndrome. J Am Coll Cardiol 2026;87(22S):e1889–e2007.'}
+};
+
+/* Recommendation library. t = Vietnamese rendering of the guideline text. c = class, l = level. */
+var R = {
+ /* ---- ESC ACS 2023: antithrombotic ---- */
+ e_acs_asp:{g:'ESC-ACS23',c:'I',l:'A',t:'Aspirin cho mọi BN không có chống chỉ định: liều nạp 150–300 mg, duy trì 75–100 mg/ngày điều trị lâu dài.'},
+ e_acs_dapt:{g:'ESC-ACS23',c:'I',l:'A',t:'Ở mọi BN HCVC: thuốc ức chế P2Y12 phối hợp aspirin (liều nạp rồi duy trì) trong 12 tháng, trừ khi có nguy cơ chảy máu cao (HBR).'},
+ e_acs_pras:{g:'ESC-ACS23',c:'I',l:'B',t:'Prasugrel ở BN chưa dùng thuốc ức chế P2Y12 tiến hành PCI: nạp 60 mg, duy trì 10 mg/ngày; 5 mg/ngày nếu ≥75 tuổi hoặc cân nặng <60 kg.'},
+ e_acs_tica:{g:'ESC-ACS23',c:'I',l:'B',t:'Ticagrelor (nạp 180 mg, duy trì 90 mg × 2 lần/ngày) bất kể chiến lược điều trị (can thiệp hay bảo tồn).'},
+ e_acs_clopi:{g:'ESC-ACS23',c:'I',l:'C',t:'Clopidogrel (nạp 300–600 mg, duy trì 75 mg/ngày) khi không có, không dung nạp hoặc chống chỉ định prasugrel/ticagrelor.'},
+ e_acs_praspref:{g:'ESC-ACS23',c:'IIa',l:'B',t:'Nên cân nhắc ưu tiên prasugrel hơn ticagrelor ở BN HCVC được PCI.'},
+ e_acs_clopiold:{g:'ESC-ACS23',c:'IIb',l:'B',t:'Ở BN HCVC cao tuổi (định nghĩa 70–80 tuổi tùy thử nghiệm), nhất là khi HBR, có thể cân nhắc clopidogrel làm thuốc ức chế P2Y12.'},
+ e_acs_ppi:{g:'ESC-ACS23',c:'I',l:'A',t:'Phối hợp thuốc ức chế bơm proton (PPI) với DAPT ở BN nguy cơ cao xuất huyết tiêu hoá.'},
+ e_acs_sapt36:{g:'ESC-ACS23',c:'IIa',l:'A',t:'BN không có biến cố sau 3–6 tháng DAPT và không có nguy cơ thiếu máu cao: nên cân nhắc chuyển sang đơn trị kháng tiểu cầu (ưu tiên thuốc ức chế P2Y12).'},
+ e_acs_deesc:{g:'ESC-ACS23',c:'IIb',l:'A',t:'Có thể cân nhắc xuống thang thuốc ức chế P2Y12 (vd. prasugrel/ticagrelor → clopidogrel) như chiến lược DAPT thay thế để giảm nguy cơ chảy máu.'},
+ e_acs_hbr1m:{g:'ESC-ACS23',c:'IIb',l:'B',t:'BN HBR: có thể cân nhắc đơn trị aspirin hoặc thuốc ức chế P2Y12 sau 1 tháng DAPT.'},
+ e_acs_no30:{g:'ESC-ACS23',c:'III',l:'B',t:'Không khuyến cáo xuống thang kháng tiểu cầu trong 30 ngày đầu sau biến cố HCVC.'},
+ e_acs_exthigh:{g:'ESC-ACS23',c:'IIa',l:'A',t:'Nên cân nhắc thêm thuốc chống huyết khối thứ hai vào aspirin để dự phòng thứ phát kéo dài ở BN nguy cơ thiếu máu cao và không HBR.'},
+ e_acs_extmod:{g:'ESC-ACS23',c:'IIb',l:'A',t:'Có thể cân nhắc thêm thuốc chống huyết khối thứ hai vào aspirin để dự phòng thứ phát kéo dài ở BN nguy cơ thiếu máu trung bình và không HBR.'},
+ e_acs_p2y12mono:{g:'ESC-ACS23',c:'IIb',l:'A',t:'Có thể cân nhắc đơn trị thuốc ức chế P2Y12 thay cho đơn trị aspirin khi điều trị lâu dài.'},
+ /* ESC ACS 2023: OAC */
+ e_acs_oac:{g:'ESC-ACS23',c:'I',l:'A',t:'Chiến lược mặc định ở BN rung nhĩ có CHA₂DS₂-VASc ≥1 (nam) hoặc ≥2 (nữ): sau tối đa 1 tuần điều trị chống huyết khối bộ ba, dùng phác đồ kép gồm NOAC liều chuẩn phòng đột quỵ + 1 thuốc kháng tiểu cầu (ưu tiên clopidogrel) đến 12 tháng.'},
+ e_acs_oac1m:{g:'ESC-ACS23',c:'IIa',l:'C',t:'Ở BN dùng OAC: nên cân nhắc aspirin + clopidogrel kéo dài hơn 1 tuần và tới 1 tháng nếu nguy cơ thiếu máu cao hoặc có đặc điểm giải phẫu/thủ thuật được đánh giá là vượt trội nguy cơ chảy máu.'},
+ e_acs_oac6:{g:'ESC-ACS23',c:'IIb',l:'B',t:'Ở BN cần OAC: có thể cân nhắc ngừng kháng tiểu cầu ở tháng thứ 6 và tiếp tục OAC.'},
+ e_acs_oac12:{g:'ESC-ACS23',c:'I',l:'B',t:'Khuyến cáo ngừng thuốc kháng tiểu cầu sau 12 tháng ở BN đang dùng OAC.'},
+ e_acs_notp:{g:'ESC-ACS23',c:'III',l:'C',t:'Không khuyến cáo dùng ticagrelor hoặc prasugrel trong phác đồ chống huyết khối bộ ba.'},
+ e_acs_riva15:{g:'ESC-ACS23',c:'IIa',l:'B',t:'Khi dùng rivaroxaban và lo ngại HBR trội hơn đột quỵ thiếu máu: nên cân nhắc rivaroxaban 15 mg/ngày thay 20 mg/ngày trong thời gian dùng kèm SAPT/DAPT.'},
+ e_acs_dabi110:{g:'ESC-ACS23',c:'IIa',l:'B',t:'BN HBR: nên cân nhắc dabigatran 110 mg × 2 thay 150 mg × 2 trong thời gian dùng kèm SAPT/DAPT.'},
+ e_acs_vka:{g:'ESC-ACS23',c:'IIa',l:'B',t:'Khi phối hợp VKA với aspirin và/hoặc clopidogrel: nên điều chỉnh chặt liều VKA với INR đích 2,0–2,5 và TTR >70%.'},
+ /* ESC CCS 2024 antithrombotic */
+ e_ccs_asplife:{g:'ESC-CCS24',c:'I',l:'A',t:'BN HCVM mạn có tiền sử NMCT hoặc PCI trước đây: aspirin 75–100 mg/ngày suốt đời sau giai đoạn DAPT ban đầu.'},
+ e_ccs_clopialt:{g:'ESC-CCS24',c:'I',l:'A',t:'Clopidogrel 75 mg/ngày là lựa chọn thay thế an toàn, hiệu quả cho đơn trị aspirin (BN có tiền sử NMCT hoặc PCI trước đây).'},
+ e_ccs_ext:{g:'ESC-CCS24',c:'IIa',l:'A',t:'Nên cân nhắc thêm thuốc chống huyết khối thứ hai vào aspirin để dự phòng thứ phát kéo dài ở BN nguy cơ thiếu máu tăng và không HBR. Lựa chọn (Bảng 8): rivaroxaban 2,5 mg × 2; clopidogrel 75 mg; prasugrel 10 mg (5 mg nếu <60 kg hoặc ≥75 tuổi); ticagrelor 60/90 mg × 2.'},
+ e_ccs_ticamono:{g:'ESC-CCS24',c:'IIb',l:'C',t:'BN đã PCI, ban đầu dùng DAPT có ticagrelor, vẫn nguy cơ thiếu máu cao và không HBR: có thể cân nhắc ticagrelor 90 mg × 2 đơn trị thay cho DAPT hay đơn trị kháng tiểu cầu khác.'},
+ e_ccs_dapt6:{g:'ESC-CCS24',c:'I',l:'A',t:'HCVM mạn không có chỉ định OAC: DAPT aspirin 75–100 mg + clopidogrel 75 mg tới 6 tháng là chiến lược mặc định sau PCI–đặt stent.'},
+ e_ccs_hbr13:{g:'ESC-CCS24',c:'I',l:'A',t:'BN HBR nhưng không có nguy cơ thiếu máu cao: ngừng DAPT sau 1–3 tháng kể từ PCI và tiếp tục đơn trị kháng tiểu cầu.'},
+ e_ccs_short:{g:'ESC-CCS24',c:'IIb',l:'B',t:'Có thể cân nhắc ngừng DAPT sau 1–3 tháng ở BN không HBR và không có nguy cơ thiếu máu cao.'},
+ e_ccs_potent:{g:'ESC-CCS24',c:'IIb',l:'C',t:'Đặt stent nguy cơ huyết khối cao (thân chung phức tạp, chỗ chia đôi 2 stent, kết quả stent chưa tối ưu, tiền sử huyết khối stent, đa hình CYP2C19 *2/*3 đã biết): có thể cân nhắc prasugrel hoặc ticagrelor (kèm aspirin) thay clopidogrel trong tháng đầu, tới 3–6 tháng.'},
+ e_ccs_oacasp:{g:'ESC-CCS24',c:'I',l:'C',t:'BN có chỉ định OAC được PCI: dùng aspirin liều thấp ban đầu (nạp nếu chưa dùng) phối hợp OAC và clopidogrel.'},
+ e_ccs_doac:{g:'ESC-CCS24',c:'I',l:'A',t:'Ở BN đủ điều kiện dùng OAC: ưu tiên DOAC hơn VKA (trừ khi chống chỉ định).'},
+ e_ccs_oacreg:{g:'ESC-CCS24',c:'I',l:'A',t:'Sau PCI không biến chứng ở BN có chỉ định OAC: ngừng aspirin sớm (≤1 tuần) → OAC + clopidogrel tới 6 tháng (nếu không có nguy cơ thiếu máu cao) hoặc tới 12 tháng (nếu nguy cơ thiếu máu cao) → sau đó OAC đơn độc.'},
+ e_ccs_oacasp1m:{g:'ESC-CCS24',c:'IIa',l:'B',t:'Nên cân nhắc tiếp tục aspirin tới 1 tháng sau PCI (kèm OAC + clopidogrel) ở BN nguy cơ thiếu máu cao hoặc có đặc điểm giải phẫu/thủ thuật được đánh giá là vượt trội nguy cơ chảy máu.'},
+ e_ccs_oaclife:{g:'ESC-CCS24',c:'I',l:'B',t:'HCVM mạn có chỉ định OAC lâu dài: VKA liều điều trị rung nhĩ đơn độc, hoặc ưu tiên DOAC đơn độc (nếu không chống chỉ định), suốt đời.'},
+ e_ccs_riva15:{g:'ESC-CCS24',c:'IIa',l:'B',t:'Khi lo ngại HBR trội hơn huyết khối stent/đột quỵ: nên cân nhắc rivaroxaban 15 mg/ngày thay 20 mg/ngày trong thời gian dùng kèm kháng tiểu cầu.'},
+ e_ccs_dabi110:{g:'ESC-CCS24',c:'IIa',l:'B',t:'Khi lo ngại HBR trội hơn huyết khối stent/đột quỵ: nên cân nhắc dabigatran 110 mg × 2 thay 150 mg × 2 trong thời gian dùng kèm kháng tiểu cầu.'},
+ e_ccs_vka:{g:'ESC-CCS24',c:'IIa',l:'B',t:'Khi phối hợp VKA với đơn hoặc kép kháng tiểu cầu: nên nhắm INR ở phần thấp của khoảng khuyến cáo và TTR >70%.'},
+ e_ccs_notp:{g:'ESC-CCS24',c:'III',l:'C',t:'Nhìn chung không khuyến cáo ticagrelor hoặc prasugrel trong phác đồ bộ ba với aspirin và OAC.'},
+ e_ccs_ppi:{g:'ESC-CCS24',c:'I',l:'A',t:'PPI ở BN tăng nguy cơ xuất huyết tiêu hoá trong suốt thời gian phối hợp thuốc chống huyết khối (kháng tiểu cầu và/hoặc OAC).'},
+ e_ccs_ppi1:{g:'ESC-CCS24',c:'IIa',l:'A',t:'Nên cân nhắc PPI khi chỉ dùng một thuốc chống huyết khối, tùy nguy cơ xuất huyết tiêu hoá của từng BN.'},
+ e_ccs_bleedassess:{g:'ESC-CCS24',c:'I',l:'B',t:'Đánh giá nguy cơ chảy máu bằng thang điểm PRECISE-DAPT, công cụ định tính ARC-HBR hoặc phương pháp khác đã được thẩm định.'},
+ /* ESC AF 2024 */
+ e_af_oac:{g:'ESC-AF24',c:'I',l:'A',t:'Kháng đông đường uống ở BN rung nhĩ lâm sàng có nguy cơ huyết khối tắc mạch tăng.'},
+ e_af_cha2:{g:'ESC-AF24',c:'I',l:'C',t:'CHA₂DS₂-VA ≥2 là chỉ điểm nguy cơ huyết khối tắc mạch tăng để quyết định khởi trị OAC.'},
+ e_af_cha1:{g:'ESC-AF24',c:'IIa',l:'C',t:'CHA₂DS₂-VA = 1 nên được xem là chỉ điểm nguy cơ huyết khối tắc mạch tăng để quyết định khởi trị OAC.'},
+ e_af_doacpref:{g:'ESC-AF24',c:'I',l:'A',t:'Khi phối hợp với kháng tiểu cầu: ưu tiên DOAC hơn VKA ở BN đủ điều kiện để giảm chảy máu và phòng huyết khối tắc mạch.'},
+ e_af_doacvalve:{g:'ESC-AF24',c:'I',l:'A',t:'DOAC được ưu tiên hơn VKA để phòng đột quỵ, TRỪ BN có van tim cơ học hoặc hẹp van hai lá vừa–nặng.'},
+ e_af_acs:{g:'ESC-AF24',c:'I',l:'A',t:'Rung nhĩ + HCVC được PCI không biến chứng: ngừng aspirin sớm (≤1 tuần), tiếp OAC (ưu tiên DOAC) + thuốc ức chế P2Y12 (ưu tiên clopidogrel) tới 12 tháng nếu nguy cơ huyết khối thấp hoặc HBR.'},
+ e_af_acs1m:{g:'ESC-AF24',c:'IIa',l:'C',t:'Nên cân nhắc phác đồ bộ ba (aspirin, clopidogrel, OAC) dài hơn 1 tuần sau HCVC khi nguy cơ thiếu máu vượt trội nguy cơ chảy máu; tổng thời gian ≤1 tháng, ghi rõ trong kế hoạch ra viện.'},
+ e_af_pci:{g:'ESC-AF24',c:'I',l:'A',t:'Sau PCI không biến chứng: ngừng aspirin sớm (≤1 tuần), tiếp OAC + thuốc ức chế P2Y12 (ưu tiên clopidogrel) tới 6 tháng nếu nguy cơ thiếu máu thấp.'},
+ e_af_pci1m:{g:'ESC-AF24',c:'IIa',l:'B',t:'Nên cân nhắc phác đồ bộ ba dài hơn 1 tuần sau PCI khi nguy cơ huyết khối stent vượt trội nguy cơ chảy máu; tổng thời gian ≤1 tháng.'},
+ e_af_no12:{g:'ESC-AF24',c:'III',l:'B',t:'Không khuyến cáo kháng tiểu cầu sau 12 tháng ở BN bệnh mạch vành/mạch máu mạn ổn định đang dùng OAC (không tăng hiệu quả, tăng chảy máu nặng).'},
+ e_af_riva15:{g:'ESC-AF24',c:'IIa',l:'B',t:'Nên cân nhắc rivaroxaban 15 mg/ngày thay 20 mg/ngày khi phối hợp kháng tiểu cầu ở BN mà lo ngại chảy máu trội hơn huyết khối stent/đột quỵ.'},
+ e_af_dabi110:{g:'ESC-AF24',c:'IIa',l:'B',t:'Nên cân nhắc dabigatran 110 mg × 2 thay 150 mg × 2 khi phối hợp kháng tiểu cầu ở BN mà lo ngại chảy máu trội hơn huyết khối stent/đột quỵ.'},
+ e_af_vka:{g:'ESC-AF24',c:'IIa',l:'C',t:'Khi phối hợp VKA với kháng tiểu cầu: nên chỉnh liều chặt với INR đích 2,0–2,5 và TTR >70%.'},
+ e_af_lowdose:{g:'ESC-AF24',c:'III',l:'B',t:'Không khuyến cáo giảm liều DOAC trừ khi BN đáp ứng tiêu chí giảm liều riêng của từng thuốc (tránh dưới liều).'},
+ e_af_bleedmod:{g:'ESC-AF24',c:'I',l:'B',t:'Đánh giá và xử trí các yếu tố nguy cơ chảy máu có thể thay đổi được ở mọi BN đủ điều kiện dùng OAC.'},
+ e_af_noscore:{g:'ESC-AF24',c:'III',l:'B',t:'Không dùng thang điểm nguy cơ chảy máu để quyết định bắt đầu hay ngừng OAC ở BN rung nhĩ.'},
+ /* AHA ACS 2025 */
+ a_acs_asp:{g:'AHA-ACS25',c:'1',l:'A',t:'Aspirin liều nạp, sau đó aspirin liều thấp hằng ngày (75–100 mg theo phần diễn giải) để giảm tử vong và MACE.'},
+ a_acs_dapt:{g:'AHA-ACS25',c:'1',l:'A',t:'BN HCVC không HBR: DAPT aspirin + thuốc ức chế P2Y12 uống ít nhất 1 năm để giảm MACE.'},
+ a_acs_ticamono:{g:'AHA-ACS25',c:'1',l:'A',t:'BN HCVC đã dung nạp DAPT với ticagrelor: chuyển sang ticagrelor đơn trị sau ≥1 tháng kể từ PCI để giảm chảy máu.'},
+ a_acs_ppi:{g:'AHA-ACS25',c:'1',l:'A',t:'BN nguy cơ cao xuất huyết tiêu hoá: dùng PPI kèm DAPT, OAC hoặc cả hai.'},
+ a_acs_deesc:{g:'AHA-ACS25',c:'2b',l:'B-R',t:'BN HCVC được PCI: có thể hợp lý xuống thang DAPT (ticagrelor/prasugrel → clopidogrel) sau 1 tháng để giảm chảy máu.'},
+ a_acs_hbr:{g:'AHA-ACS25',c:'2b',l:'B-R',t:'BN HCVC được PCI có HBR: có thể hợp lý chuyển sang đơn trị kháng tiểu cầu (aspirin hoặc thuốc ức chế P2Y12) sau 1 tháng.'},
+ a_acs_nstept:{g:'AHA-ACS25',c:'1',l:'B-R',t:'NSTE-ACS được PCI: khuyến cáo prasugrel hoặc ticagrelor để giảm MACE và huyết khối stent.'},
+ a_acs_stemipt:{g:'AHA-ACS25',c:'1',l:'B-R',t:'STEMI được PCI tiên phát: dùng prasugrel hoặc ticagrelor để giảm MACE và huyết khối stent.'},
+ a_acs_nsteclopi:{g:'AHA-ACS25',c:'1',l:'B-R',t:'NSTE-ACS: clopidogrel khi prasugrel/ticagrelor không có, không dung nạp hoặc chống chỉ định.'},
+ a_acs_stemiclopi:{g:'AHA-ACS25',c:'1',l:'C-LD',t:'STEMI được PCI tiên phát: clopidogrel khi prasugrel/ticagrelor không có, không dung nạp hoặc chống chỉ định.'},
+ a_acs_prasstroke:{g:'AHA-ACS25',c:'3: Harm',l:'B-R',t:'BN có tiền sử đột quỵ hoặc TIA: không dùng prasugrel (kết cục lâm sàng thực sự xấu hơn).'},
+ a_acs_oac:{g:'AHA-ACS25',c:'1',l:'B-R',t:'BN HCVC cần OAC: ngừng aspirin sau 1–4 tuần điều trị bộ ba, tiếp tục thuốc ức chế P2Y12 (ưu tiên clopidogrel) + OAC để giảm chảy máu.'},
+ /* AHA CCD 2023 */
+ a_ccd_asp:{g:'AHA-CCD23',c:'1',l:'A',t:'BN bệnh mạch vành mạn không có chỉ định OAC: aspirin liều thấp 81 mg (75–100 mg) để giảm biến cố xơ vữa.'},
+ a_ccd_dapt6:{g:'AHA-CCD23',c:'1',l:'A',t:'BN bệnh mạch vành mạn được PCI: DAPT aspirin + clopidogrel 6 tháng, sau đó đơn trị kháng tiểu cầu (SAPT).'},
+ a_ccd_p2y12mono:{g:'AHA-CCD23',c:'2a',l:'A',t:'BN được PCI với DES đã hoàn thành 1–3 tháng DAPT (BN chọn lọc): đơn trị thuốc ức chế P2Y12 ít nhất 12 tháng là hợp lý để giảm chảy máu.'},
+ a_ccd_extdapt:{g:'AHA-CCD23',c:'2b',l:'A',t:'BN có tiền sử NMCT và nguy cơ chảy máu thấp: DAPT kéo dài quá 12 tháng, tới 3 năm, có thể hợp lý để giảm MACE.'},
+ a_ccd_noclopi:{g:'AHA-CCD23',c:'3: No benefit',l:'A',t:'Không có HCVC gần đây hay chỉ định DAPT liên quan PCI: thêm clopidogrel vào aspirin không có lợi.'},
+ a_ccd_prasstroke:{g:'AHA-CCD23',c:'3: Harm',l:'B-R',t:'BN có tiền sử đột quỵ, TIA hoặc xuất huyết nội sọ: không dùng prasugrel.'},
+ a_ccd_nsaid:{g:'AHA-CCD23',c:'3: Harm',l:'B-R',t:'Không dùng NSAID kéo dài (tăng biến chứng tim mạch và chảy máu).'},
+ a_ccd_oac:{g:'AHA-CCD23',c:'1',l:'B-R',t:'PCI chương trình ở BN cần OAC: DAPT 1–4 tuần, sau đó clopidogrel đơn độc tới 6 tháng, kèm DOAC.'},
+ a_ccd_oacasp:{g:'AHA-CCD23',c:'2a',l:'B-R',t:'BN cần OAC sau PCI: tiếp aspirin cùng clopidogrel tới 1 tháng là hợp lý nếu nguy cơ huyết khối cao và nguy cơ chảy máu thấp.'},
+ a_ccd_oac1y:{g:'AHA-CCD23',c:'2b',l:'B-R',t:'BN cần OAC có nguy cơ huyết khối xơ vữa thấp: có thể cân nhắc ngừng kháng tiểu cầu và dùng DOAC đơn độc sau 1 năm kể từ PCI.'},
+ a_ccd_doacmono:{g:'AHA-CCD23',c:'2b',l:'C-LD',t:'BN cần OAC: có thể cân nhắc đơn trị DOAC nếu không còn chỉ định cấp phối hợp kháng tiểu cầu.'},
+ a_ccd_riva:{g:'AHA-CCD23',c:'2a',l:'B-R',t:'Không có chỉ định DOAC liều điều trị hay DAPT, nguy cơ thiếu máu tái phát cao, nguy cơ chảy máu thấp–trung bình: thêm rivaroxaban 2,5 mg × 2 vào aspirin 81 mg là hợp lý.'},
+ a_ccd_ppi:{g:'AHA-CCD23',c:'2a',l:'B-R',t:'BN đang DAPT: PPI có thể hiệu quả để giảm xuất huyết tiêu hoá.'},
+ /* ESC CKD 2026 antithrombotic */
+ e_ckd_sapt:{g:'ESC-CKD26',c:'I',l:'C',t:'HCVM mạn + CKD, không có chỉ định kháng đông: kháng tiểu cầu bằng aspirin liều thấp hoặc clopidogrel.'},
+ e_ckd_clopi:{g:'ESC-CKD26',c:'IIa',l:'B1',t:'HCVM mạn + CKD với eGFR >30, không có chỉ định kháng đông: nên ưu tiên clopidogrel hơn aspirin liều thấp.'},
+ e_ckd_ccsdapt:{g:'ESC-CKD26',c:'IIa',l:'B2',t:'CKD + HCVM mạn được PCI chương trình, không có chỉ định kháng đông: nên cân nhắc rút ngắn DAPT (1–3 tháng) để giảm chảy máu.'},
+ e_ckd_acsdapt:{g:'ESC-CKD26',c:'IIa',l:'B1',t:'HCVC + CKD không có chỉ định kháng đông: nên cân nhắc rút ngắn DAPT (3 tháng, sau đó aspirin hoặc thuốc ức chế P2Y12) hoặc xuống thang DAPT (prasugrel/ticagrelor → clopidogrel) sau 1–3 tháng để giảm chảy máu nặng.'},
+ e_ckd_af30:{g:'ESC-CKD26',c:'I',l:'A',t:'Rung nhĩ + CKD với eGFR ≥30: ưu tiên DOAC hơn VKA.'},
+ e_ckd_af15:{g:'ESC-CKD26',c:'IIa',l:'B1',t:'Rung nhĩ + CKD với eGFR 15–29: nên ưu tiên thuốc ức chế yếu tố Xa đường uống hơn VKA.'},
+ e_ckd_af0:{g:'ESC-CKD26',c:'IIa',l:'C',t:'Rung nhĩ + eGFR <15 (kể cả đang điều trị thay thế thận): nên cá thể hoá quyết định kháng đông.'},
+ e_ckd_noapt:{g:'ESC-CKD26',c:'III',l:'B1',t:'(Tham khảo) Không dùng thường quy kháng tiểu cầu ở CKD eGFR <60 KHÔNG có bệnh xơ vữa có triệu chứng – không áp dụng cho BN sau PCI.'},
+
+ /* ---- BP ---- */
+ e_htn_target:{g:'ESC-HTN24',c:'I',l:'A',t:'Đích HA tâm thu khi điều trị ở đa số người lớn: 120–129 mmHg, nếu dung nạp tốt.'},
+ e_htn_alara:{g:'ESC-HTN24',c:'I',l:'A',t:'Nếu điều trị dung nạp kém và không đạt 120–129 mmHg: nhắm HA tâm thu “thấp nhất có thể đạt được một cách hợp lý” (ALARA).'},
+ e_htn_lenient:{g:'ESC-HTN24',c:'IIa',l:'C',t:'Nên cân nhắc đích HA cá thể hoá, nới hơn (vd. <140 mmHg) ở BN hạ HA tư thế có triệu chứng trước điều trị và/hoặc ≥85 tuổi.'},
+ e_htn_frail:{g:'ESC-HTN24',c:'IIb',l:'C',t:'Có thể cân nhắc đích HA nới hơn (vd. <140/90 mmHg) ở BN suy yếu (frailty) vừa–nặng hoặc tuổi thọ dự kiến <3 năm.'},
+ e_htn_dbp:{g:'ESC-HTN24',c:'IIb',l:'C',t:'Khi HA tâm thu đã đạt (120–129) nhưng HA tâm trương ≥80 mmHg: có thể tăng cường điều trị để đạt HA tâm trương 70–79 mmHg.'},
+ e_htn_mi:{g:'ESC-HTN24',c:'I',l:'A',t:'BN có tiền sử NMCT cần hạ HA: chẹn beta và thuốc ức chế hệ RAS là một phần của điều trị.'},
+ e_htn_angina:{g:'ESC-HTN24',c:'I',l:'A',t:'BN đau thắt ngực có triệu chứng cần hạ HA: chẹn beta và/hoặc chẹn kênh canxi là một phần của điều trị.'},
+ e_htn_first:{g:'ESC-HTN24',c:'I',l:'A',t:'ACEi, ARB, chẹn kênh canxi DHP và lợi tiểu (thiazide/giống thiazide) là thuốc hàng đầu để hạ HA.'},
+ e_htn_bb:{g:'ESC-HTN24',c:'I',l:'A',t:'Phối hợp chẹn beta với các nhóm hạ HA chính khác khi có chỉ định bắt buộc (đau thắt ngực, sau NMCT, HFrEF, kiểm soát tần số).'},
+ e_htn_combo:{g:'ESC-HTN24',c:'I',l:'B',t:'THA đã xác định (≥140/90 mmHg): khởi trị phối hợp, ưu tiên thuốc ức chế RAS + chẹn kênh canxi DHP hoặc lợi tiểu (ngoại lệ: ≥85 tuổi, hạ HA tư thế có triệu chứng, suy yếu vừa–nặng, HA tăng 120–139/70–89 kèm chỉ định khác).'},
+ e_htn_init130:{g:'ESC-HTN24',c:'I',l:'A',t:'HA tăng và nguy cơ tim mạch đủ cao (bao gồm bệnh tim mạch đã xác định): sau 3 tháng thay đổi lối sống, điều trị thuốc khi HA ≥130/80 mmHg được xác nhận.'},
+ e_htn_ohtest:{g:'ESC-HTN24',c:'I',l:'B',t:'Trước khi bắt đầu/tăng cường thuốc hạ HA: kiểm tra hạ HA tư thế (ngồi/nằm 5 phút, đo lại sau 1 và/hoặc 3 phút đứng).'},
+ e_htn_life:{g:'ESC-HTN24',c:'I',l:'A',t:'Duy trì thuốc hạ HA suốt đời, kể cả sau 85 tuổi, nếu dung nạp tốt.'},
+ e_htn_dm:{g:'ESC-HTN24',c:'I',l:'A',t:'BN ĐTĐ đang dùng thuốc hạ HA: đích HA tâm thu 120–129 mmHg nếu dung nạp.'},
+ e_htn_ckd:{g:'ESC-HTN24',c:'I',l:'A',t:'CKD vừa–nặng đang dùng thuốc hạ HA và eGFR >30: đích HA tâm thu 120–129 mmHg nếu dung nạp; cá thể hoá khi eGFR thấp hơn hoặc ghép thận.'},
+ e_htn_ckdsglt2:{g:'ESC-HTN24',c:'I',l:'A',t:'THA + CKD với eGFR >20: khuyến cáo ức chế SGLT2 để cải thiện kết cục.'},
+ e_htn_ckdacei:{g:'ESC-HTN24',c:'IIa',l:'B',t:'Nên dùng ACEi hoặc ARB trong phác đồ ở BN THA có albumin niệu vi lượng hoặc protein niệu.'},
+ e_ckd_bp:{g:'ESC-CKD26',c:'I',l:'A',t:'CKD với eGFR ≥30: đích HA tâm thu 120–129 mmHg nếu dung nạp, để giảm nguy cơ tim mạch và giảm albumin niệu.'},
+ e_ckd_bplow:{g:'ESC-CKD26',c:'I',l:'C',t:'CKD với eGFR <30: khuyến cáo đích HA cá thể hoá.'},
+ a_htn_init:{g:'AHA-HTN25',c:'1',l:'A',t:'THA + bệnh tim mạch lâm sàng: khởi trị thuốc hạ HA khi HA tâm thu trung bình ≥130 mmHg.'},
+ a_htn_goal:{g:'AHA-HTN25',c:'1',l:'A',t:'THA ở người tăng nguy cơ tim mạch: đích HA tâm thu ít nhất <130 mmHg, khuyến khích đạt <120 mmHg.'},
+ a_htn_dbp:{g:'AHA-HTN25',c:'1',l:'B-R',t:'THA ở người tăng nguy cơ tim mạch: đích HA tâm trương <80 mmHg.'},
+ a_htn_dm:{g:'AHA-HTN25',c:'1',l:'A',t:'ĐTĐ týp 2 + THA: bắt đầu thuốc khi HA tâm thu ≥130 mmHg, đích <130 mmHg, khuyến khích <120 mmHg.'},
+ a_htn_dmdbp:{g:'AHA-HTN25',c:'1',l:'C-LD',t:'ĐTĐ týp 2 + THA: bắt đầu thuốc khi HA tâm trương ≥80 mmHg, đích <80 mmHg.'},
+ a_htn_ckd:{g:'AHA-HTN25',c:'1',l:'A',t:'THA + CKD (eGFR <60 hoặc albumin niệu ≥30 mg/g): đích HA tâm thu <130 mmHg.'},
+ a_htn_ckdraas:{g:'AHA-HTN25',c:'1',l:'B-R',t:'THA + CKD (eGFR <60) kèm albumin niệu ≥30 mg/g: dùng thuốc ức chế RAA (ACEi hoặc ARB, không phối hợp cả hai).'},
+ a_ccd_bpgoal:{g:'AHA-CCD23',c:'1',l:'B-R',t:'Bệnh mạch vành mạn có THA: đích HA <130/<80 mmHg.'},
+ a_ccd_bpdrug:{g:'AHA-CCD23',c:'1',l:'B-R',t:'Bệnh mạch vành mạn + THA (≥130/80): ACEi, ARB hoặc chẹn beta là thuốc hàng đầu khi có chỉ định bắt buộc (vd. NMCT gần đây, đau thắt ngực); thêm chẹn kênh canxi DHP, lợi tiểu thiazide tác dụng dài và/hoặc MRA khi cần.'},
+ a_ccd_bplife:{g:'AHA-CCD23',c:'1',l:'A',t:'Bệnh mạch vành mạn có HA tăng (120–129/<80 mmHg): biện pháp không dùng thuốc là điều trị đầu tay.'},
+
+ /* ---- Diabetes / metabolic ---- */
+ e_ccs_sglt2:{g:'ESC-CCS24',c:'I',l:'A',t:'ĐTĐ týp 2 + HCVM mạn: ức chế SGLT2 có lợi ích tim mạch đã chứng minh, độc lập với HbA1c nền/đích và thuốc hạ đường huyết đang dùng.'},
+ e_ccs_glp1:{g:'ESC-CCS24',c:'I',l:'A',t:'ĐTĐ týp 2 + HCVM mạn: đồng vận thụ thể GLP-1 có lợi ích tim mạch đã chứng minh, độc lập với HbA1c nền/đích và thuốc hạ đường huyết đang dùng.'},
+ e_ccs_sema:{g:'ESC-CCS24',c:'IIa',l:'B',t:'BN HCVM mạn KHÔNG ĐTĐ, thừa cân (BMI >27 kg/m²) hoặc béo phì: nên cân nhắc semaglutide để giảm tử vong tim mạch, NMCT, đột quỵ.'},
+ e_dm23_a1c:{g:'ESC-DM23',c:'I',l:'A',t:'Kiểm soát đường huyết chặt (HbA1c <7%, <53 mmol/mol) để giảm biến chứng vi mạch.'},
+ e_ckd_a1c:{g:'ESC-CKD26',c:'I',l:'B1',t:'ĐTĐ + CKD: đích HbA1c cá thể hoá trong khoảng <6,5% đến <8,0%, nhắm <7,0% bất cứ khi nào có thể.'},
+ e_ckd_dmfirst:{g:'ESC-CKD26',c:'I',l:'A',t:'ĐTĐ týp 2 + CKD: ức chế SGLT2 và GLP-1 RA là thuốc hạ đường huyết hàng đầu (lợi ích trên tiến triển CKD và biến cố tim mạch).'},
+ e_ckd_metf:{g:'ESC-CKD26',c:'IIa',l:'B1',t:'ĐTĐ týp 2 + CKD với eGFR ≥30: nên cân nhắc metformin để hạ đường huyết thêm.'},
+ e_ckd_insulin:{g:'ESC-CKD26',c:'I',l:'A',t:'ĐTĐ týp 2 + CKD: dùng insulin nếu không đạt đích đường huyết với thuốc uống hoặc GLP-1 RA.'},
+ a_ccd_sglt2glp1:{g:'AHA-CCD23',c:'1',l:'A',t:'Bệnh mạch vành mạn + ĐTĐ týp 2: dùng ức chế SGLT2 hoặc GLP-1 RA có lợi ích tim mạch đã chứng minh để giảm MACE.'},
+ a_ckm_life:{g:'AHA-CKM26',c:'1',l:'A',t:'CKM giai đoạn 4 với ĐTĐ týp 2 + ASCVD: kế hoạch thay đổi lối sống cá thể hoá (chế độ ăn có lợi cho tim, hoạt động thể lực).'},
+ a_ckm_sglt2glp1:{g:'AHA-CKM26',c:'1',l:'A',t:'CKM giai đoạn 4 với ĐTĐ týp 2 + ASCVD: dùng ức chế SGLT2 hoặc liệu pháp nền GLP-1 có lợi ích tim mạch đã chứng minh để giảm biến cố và tử vong tim mạch.'},
+ a_ckm_combo:{g:'AHA-CKM26',c:'2a',l:'C-LD',t:'CKM giai đoạn 4 với ĐTĐ týp 2 + ASCVD: phối hợp ức chế SGLT2 và liệu pháp nền GLP-1 có thể có lợi để cải thiện kết cục tim mạch.'},
+ a_ckm_hfsglt2:{g:'AHA-CKM26',c:'1',l:'A',t:'CKM giai đoạn 4 với ĐTĐ týp 2 + suy tim: ưu tiên ức chế SGLT2 là thuốc hạ đường huyết bảo vệ tim hàng đầu.'},
+ a_ckm_obes:{g:'AHA-CKM26',c:'1',l:'B-R',t:'Thừa cân/béo phì (BMI ≥27 kg/m²) + ASCVD: liệu pháp nền GLP-1 có lợi ích tim mạch đã chứng minh, kèm tư vấn ăn uống và vận động, để giảm biến cố tim mạch.'},
+ a_ckm_obeslife:{g:'AHA-CKM26',c:'1',l:'A',t:'Thừa cân/béo phì + ASCVD: can thiệp lối sống hành vi tích cực, đa thành phần để giảm cân và cải thiện yếu tố nguy cơ CKM.'},
+ a_ckm_harm:{g:'AHA-CKM26',c:'3: Harm',l:'B-R',t:'Thừa cân/béo phì + ASCVD: naltrexone/bupropion hoặc thuốc chứa phentermine có thể gây hại (tăng HA và nhịp tim).'},
+
+ /* ---- Lipids ---- */
+ e_lip_goal:{g:'ESC-CCS24',c:'I',l:'A',t:'Điều trị hạ lipid với đích LDL-C <1,4 mmol/L (<55 mg/dL) và giảm ≥50% so với nền (cùng khuyến cáo I-A trong ESC 2023 HCVC).'},
+ e_lip_statin:{g:'ESC-CCS24',c:'I',l:'A',t:'Statin cường độ cao tới liều cao nhất dung nạp được để đạt đích LDL-C cho mọi BN HCVM mạn (ESC 2023 HCVC: khởi động/tiếp tục statin liều cao càng sớm càng tốt, I-A).'},
+ e_lip_eze:{g:'ESC-ACS23',c:'I',l:'B',t:'Không đạt đích LDL-C dù statin liều tối đa dung nạp sau 4–6 tuần: thêm ezetimibe.'},
+ e_lip_pcsk9:{g:'ESC-ACS23',c:'I',l:'A',t:'Không đạt đích LDL-C dù statin tối đa + ezetimibe sau 4–6 tuần: thêm thuốc ức chế PCSK9.'},
+ e_lip_bempe_intol:{g:'ESC-CCS24',c:'I',l:'B',t:'Không dung nạp statin và không đạt đích với ezetimibe: phối hợp acid bempedoic.'},
+ e_lip_bempe_add:{g:'ESC-LIP25',c:'IIa',l:'C',t:'Nên cân nhắc thêm acid bempedoic vào statin liều tối đa dung nạp ± ezetimibe ở BN nguy cơ cao/rất cao để đạt đích LDL-C.'},
+ e_lip_nonstatin:{g:'ESC-LIP25',c:'I',l:'A',t:'BN không thể dùng statin: dùng các thuốc không phải statin có lợi ích tim mạch đã chứng minh (đơn độc hoặc phối hợp), chọn theo mức LDL-C cần giảm thêm.'},
+ e_lip_40:{g:'ESC-ACS23',c:'IIb',l:'B',t:'Biến cố xơ vữa huyết khối tái phát (trong vòng 2 năm sau HCVC đầu) khi đang dùng statin tối đa dung nạp: có thể cân nhắc đích LDL-C <1,0 mmol/L (<40 mg/dL).'},
+ e_lip_intens:{g:'ESC-LIP25',c:'I',l:'C',t:'Tăng cường điều trị hạ lipid ngay trong lần nhập viện HCVC ở BN đã dùng thuốc hạ lipid trước đó.'},
+ e_lip_combo:{g:'ESC-LIP25',c:'IIa',l:'B',t:'Nên cân nhắc khởi trị phối hợp statin cường độ cao + ezetimibe ngay trong lần nhập viện HCVC ở BN chưa điều trị và dự kiến không đạt đích LDL-C với statin đơn độc.'},
+ e_lip_lpa:{g:'ESC-LIP25',c:'IIa',l:'B',t:'Lp(a) >50 mg/dL (105 nmol/L) nên được xem là yếu tố làm tăng nguy cơ tim mạch ở mọi người lớn; Lp(a) càng cao nguy cơ càng tăng.'},
+ e_lip_ipe:{g:'ESC-LIP25',c:'IIa',l:'B',t:'Nên cân nhắc icosapent ethyl liều cao (2 g × 2/ngày) phối hợp statin ở BN nguy cơ cao/rất cao có TG lúc đói 135–499 mg/dL (1,52–5,63 mmol/L).'},
+ e_ckd_statin:{g:'ESC-CKD26',c:'I',l:'A',t:'CKD (eGFR <60, chưa điều trị thay thế thận) hoặc HCVM mạn + CKD: phác đồ dựa trên statin ± ezetimibe đã chứng minh an toàn ở CKD, bất kể mức lipid.'},
+ e_ckd_pcsk9:{g:'ESC-CKD26',c:'IIa',l:'B1',t:'HCVM mạn + CKD (eGFR ≥20) có LDL-C ≥1,8 mmol/L (70 mg/dL) hoặc non-HDL-C ≥2,6 mmol/L (100 mg/dL) dù statin ± ezetimibe: nên cân nhắc thêm thuốc ức chế PCSK9.'},
+ a_lip_vhr:{g:'AHA-LIP26',c:'1',l:'A',t:'ASCVD nguy cơ rất cao: statin cường độ cao để giảm LDL-C ≥50%, đích LDL-C <55 mg/dL (1,4 mmol/L) và non-HDL-C <85 mg/dL (2,2 mmol/L).'},
+ a_lip_vhradd:{g:'AHA-LIP26',c:'1',l:'A',t:'ASCVD nguy cơ rất cao đang dùng statin tối đa dung nạp: thêm ezetimibe và/hoặc kháng thể đơn dòng PCSK9 (chọn theo mức cần giảm LDL-C và ý muốn BN) để đạt LDL-C <55 mg/dL và non-HDL-C <85 mg/dL. Không bắt buộc dùng ezetimibe trước PCSK9 mAb.'},
+ a_lip_vhrbempe:{g:'AHA-LIP26',c:'2a',l:'B-R',t:'ASCVD nguy cơ rất cao, statin tối đa dung nạp: hợp lý thêm acid bempedoic (± ezetimibe và/hoặc PCSK9 mAb) để đạt LDL-C <55 mg/dL.'},
+ a_lip_vhrincl:{g:'AHA-LIP26',c:'2a',l:'B-R',t:'ASCVD nguy cơ rất cao, statin tối đa ± ezetimibe: hợp lý thêm inclisiran nếu không dung nạp/không tiếp cận được evolocumab/alirocumab hoặc muốn liều thưa hơn (chưa có thử nghiệm kết cục tim mạch hoàn tất).'},
+ a_lip_nvhr:{g:'AHA-LIP26',c:'1',l:'A',t:'ASCVD không thuộc nhóm nguy cơ rất cao: statin cường độ cao để giảm LDL-C ≥50%, đích LDL-C <70 mg/dL (1,8 mmol/L) và non-HDL-C <100 mg/dL.'},
+ a_lip_nvhradd:{g:'AHA-LIP26',c:'2a',l:'B-R',t:'ASCVD không thuộc nhóm nguy cơ rất cao, statin tối đa dung nạp: hợp lý thêm ezetimibe, PCSK9 mAb hoặc acid bempedoic để đạt LDL-C <70 mg/dL (và có thể nhắm <55 mg/dL, cũng 2a/B-R).'},
+ a_lip_mon:{g:'AHA-LIP26',c:'1',l:'A',t:'BN đang điều trị hạ lipid: xét nghiệm bộ lipid 4–12 tuần sau khi bắt đầu hoặc chỉnh liều, sau đó mỗi 6–12 tháng.'},
+ a_lip_lpa:{g:'AHA-LIP26',c:'1',l:'B-NR',t:'Đo nồng độ Lp(a) ít nhất một lần ở mọi người lớn để đánh giá nguy cơ ASCVD.'},
+ a_lip_tg:{g:'AHA-LIP26',c:'1',l:'B-R',t:'ASCVD có LDL-C ≥55 mg/dL và non-HDL-C ≥85 mg/dL khi đang dùng statin tối đa, TG tồn tại 150–999 mg/dL: tăng cường điều trị hạ LDL-C.'},
+ a_lip_ipe:{g:'AHA-LIP26',c:'2b',l:'B-R',t:'Người ≥50 tuổi có ASCVD, TG tồn tại 150–499 mg/dL và LDL-C <100 mg/dL khi dùng statin tối đa: thêm icosapent ethyl có thể hợp lý.'},
+ a_acs_statin:{g:'AHA-ACS25',c:'1',l:'A',t:'BN HCVC: statin cường độ cao để giảm MACE.'},
+ a_acs_lip70:{g:'AHA-ACS25',c:'1',l:'A',t:'BN HCVC đã dùng statin tối đa dung nạp mà LDL-C ≥70 mg/dL (≥1,8 mmol/L): thêm thuốc hạ lipid không phải statin.'},
+ a_acs_lip55:{g:'AHA-ACS25',c:'2a',l:'B-R',t:'BN HCVC đã dùng statin tối đa dung nạp mà LDL-C 55–69 mg/dL (1,4 đến <1,8 mmol/L): hợp lý thêm thuốc hạ lipid không phải statin.'},
+ a_acs_lipintol:{g:'AHA-ACS25',c:'1',l:'B-R',t:'BN HCVC không dung nạp statin: dùng thuốc hạ lipid không phải statin để giảm LDL-C và MACE.'},
+ a_acs_lippanel:{g:'AHA-ACS25',c:'1',l:'C-LD',t:'Sau HCVC: xét nghiệm bộ lipid lúc đói 4–8 tuần sau khi bắt đầu hoặc chỉnh thuốc hạ lipid.'},
+
+ /* ---- Kidney ---- */
+ e_ckd_raas:{g:'ESC-CKD26',c:'I',l:'A',t:'BN CKD: ACEi hoặc ARB liều tối đa dung nạp để đạt đích HA, giảm tiến triển CKD và biến cố tim mạch.'},
+ e_ckd_sglt2dm:{g:'ESC-CKD26',c:'I',l:'A',t:'CKD + ĐTĐ týp 2 với eGFR ≥20: ức chế SGLT2 để giảm suy thận và biến cố tim mạch, bất kể kiểm soát đường huyết.'},
+ e_ckd_sglt2:{g:'ESC-CKD26',c:'I',l:'A',t:'CKD không ĐTĐ với eGFR ≥20 và uACR ≥20 mg/mmol (≥200 mg/g): ức chế SGLT2.'},
+ e_ckd_sglt2low:{g:'ESC-CKD26',c:'IIa',l:'B1',t:'CKD không ĐTĐ với eGFR 20–44 và uACR <20 mg/mmol: nên cân nhắc ức chế SGLT2 để làm chậm tiến triển bệnh thận.'},
+ e_ckd_finer:{g:'ESC-CKD26',c:'I',l:'A',t:'CKD + ĐTĐ týp 2 với eGFR ≥25 và uACR ≥3 mg/mmol (≥30 mg/g): MRA không steroid (finerenone) để giảm suy thận và biến cố tim mạch.'},
+ e_ckd_sema:{g:'ESC-CKD26',c:'I',l:'A',t:'CKD + ĐTĐ týp 2 với eGFR 25–49 và uACR ≥10 mg/mmol (≥100 mg/g), hoặc eGFR 50–74 và uACR ≥30 mg/mmol (≥300 mg/g): semaglutide tiêm dưới da 1,0 mg/tuần.'},
+ e_ckd_noacearb:{g:'ESC-CKD26',c:'III',l:'A',t:'Không phối hợp ARB với ACEi ở BN CKD (nguy cơ tổn thương thận cấp, tăng kali máu nặng).'},
+ a_ckm_raas:{g:'AHA-CKM26',c:'1',l:'B-R',t:'CKD + ĐTĐ týp 2, hoặc CKD không ĐTĐ có uACR ≥30 mg/g, với eGFR ≥30: thuốc ức chế RAS (ACEi hoặc ARB) liều tối đa dung nạp.'},
+ a_ckm_sglt2:{g:'AHA-CKM26',c:'1',l:'A',t:'CKD + ĐTĐ týp 2, hoặc CKD không ĐTĐ có uACR ≥200 mg/g, với eGFR ≥20: ức chế SGLT2.'},
+ a_ckm_sglt2b:{g:'AHA-CKM26',c:'2a',l:'B-R',t:'CKD không ĐTĐ có uACR 30–199 mg/g: có thể cân nhắc ức chế SGLT2.'},
+ a_ckm_nsmra:{g:'AHA-CKM26',c:'1',l:'A',t:'CKD + ĐTĐ týp 2 với uACR ≥30 mg/g dù đã dùng ACEi/ARB và SGLT2i, eGFR ≥25: thêm MRA không steroid có lợi ích thận–tim mạch đã chứng minh.'},
+ a_ckm_glp1ckd:{g:'AHA-CKM26',c:'1',l:'B-R',t:'CKD + ĐTĐ týp 2 với uACR ≥100 mg/g dù đã dùng ACEi/ARB và SGLT2i: liệu pháp nền GLP-1 có lợi ích thận–tim mạch đã chứng minh.'},
+ a_ccd_ckd:{g:'AHA-CCD23',c:'1',l:'C-LD',t:'Bệnh mạch vành mạn + CKD: thực hiện biện pháp giảm nguy cơ tổn thương thận cấp do điều trị.'},
+
+ /* ---- Other secondary prevention ---- */
+ e_acs_bb40:{g:'ESC-ACS23',c:'I',l:'A',t:'Chẹn beta ở BN HCVC có LVEF ≤40%, bất kể triệu chứng suy tim.'},
+ e_acs_bbroutine:{g:'ESC-ACS23',c:'IIa',l:'B',t:'Nên cân nhắc chẹn beta thường quy cho mọi BN HCVC bất kể LVEF.'},
+ e_acs_acei:{g:'ESC-ACS23',c:'I',l:'A',t:'ACEi (ARB nếu không dung nạp) ở BN HCVC có triệu chứng suy tim, LVEF ≤40%, ĐTĐ, THA và/hoặc CKD.'},
+ e_acs_aceiall:{g:'ESC-ACS23',c:'IIa',l:'A',t:'Nên cân nhắc ACEi thường quy cho mọi BN HCVC bất kể LVEF.'},
+ e_acs_mra:{g:'ESC-ACS23',c:'I',l:'A',t:'MRA ở BN HCVC có LVEF ≤40% kèm suy tim hoặc ĐTĐ.'},
+ e_acs_lvef:{g:'ESC-ACS23',c:'I',l:'C',t:'LVEF trước ra viện ≤40%: đánh giá lại LVEF sau HCVC 6–12 tuần (sau tái thông hoàn toàn và điều trị nội tối ưu) để xét chỉ định ICD dự phòng tiên phát.'},
+ e_acs_colch:{g:'ESC-ACS23',c:'IIb',l:'A',t:'Có thể cân nhắc colchicine liều thấp (0,5 mg/ngày), nhất là khi yếu tố nguy cơ khác chưa kiểm soát tốt hoặc tái phát biến cố tim mạch dù điều trị tối ưu.'},
+ e_acs_flu:{g:'ESC-ACS23',c:'I',l:'A',t:'Tiêm vaccine cúm cho mọi BN HCVC.'},
+ e_acs_rehab:{g:'ESC-ACS23',c:'I',l:'A',t:'Mọi BN HCVC tham gia chương trình phục hồi chức năng tim – dự phòng có giám sát y tế, cấu trúc, toàn diện, đa chuyên ngành, dựa trên vận động.'},
+ e_acs_life:{g:'ESC-ACS23',c:'I',l:'B',t:'Lối sống lành mạnh: bỏ hoàn toàn thuốc lá, chế độ ăn kiểu Địa Trung Hải, hạn chế rượu, vận động aerobic đều đặn + tập sức bền, giảm thời gian ngồi.'},
+ e_acs_smoke:{g:'ESC-ACS23',c:'IIa',l:'A',t:'Người hút thuốc: nên cân nhắc hỗ trợ theo dõi, liệu pháp thay thế nicotine, varenicline hoặc bupropion (đơn lẻ hoặc phối hợp).'},
+ e_acs_polypill:{g:'ESC-ACS23',c:'IIa',l:'B',t:'Nên cân nhắc viên đa thành phần (polypill) để cải thiện tuân thủ và kết cục trong dự phòng thứ phát sau HCVC.'},
+ e_ccs_acei:{g:'ESC-CCS24',c:'I',l:'A',t:'HCVM mạn có bệnh kèm như THA, ĐTĐ hoặc suy tim: ACEi (hoặc ARB).'},
+ e_ccs_aceivhr:{g:'ESC-CCS24',c:'IIa',l:'A',t:'Nên cân nhắc ACEi ở BN HCVM mạn nguy cơ biến cố tim mạch rất cao.'},
+ e_ccs_colch:{g:'ESC-CCS24',c:'IIa',l:'A',t:'HCVM mạn do xơ vữa: nên cân nhắc colchicine liều thấp (0,5 mg/ngày) để giảm NMCT, đột quỵ và nhu cầu tái thông.'},
+ e_hf_bbB:{g:'ESC-HF26',c:'I',l:'B1',t:'Suy tim giai đoạn B với LVEF <50%: chẹn beta để giảm nhập viện vì suy tim hoặc tử vong.'},
+ e_hf_aceiB:{g:'ESC-HF26',c:'I',l:'A',t:'Suy tim giai đoạn B với LVEF ≤40%: ACEi (ARB nếu không dung nạp).'},
+ e_hf_eple:{g:'ESC-HF26',c:'I',l:'B1',t:'LVEF ≤40% sau NMCT kèm dấu hiệu suy tim hoặc ĐTĐ: eplerenone để giảm nhập viện vì suy tim và tử vong.'},
+ e_hf_sglt2:{g:'ESC-HF26',c:'I',l:'A',t:'Suy tim có triệu chứng, bất kể LVEF: ức chế SGLT2 (dapagliflozin hoặc empagliflozin).'},
+ e_hf_mra:{g:'ESC-HF26',c:'I',l:'A',t:'Suy tim có triệu chứng, bất kể LVEF: MRA (MRA steroid cho HFrEF; steroid/không steroid cho HFpEF).'},
+ e_hf_bb:{g:'ESC-HF26',c:'I',l:'A',t:'HFrEF có triệu chứng, ổn định: chẹn beta.'},
+ e_hf_arni:{g:'ESC-HF26',c:'I',l:'A',t:'HFrEF có triệu chứng: ACEi hoặc ARNI (chuyển từ ACEi/ARB sang ARNI: I-B1).'},
+ a_acs_bb:{g:'AHA-ACS25',c:'1',l:'A',t:'BN HCVC không chống chỉ định: khởi trị chẹn beta đường uống sớm (<24 giờ) để giảm tái nhồi máu và loạn nhịp thất.'},
+ a_acs_acei:{g:'AHA-ACS25',c:'1',l:'A',t:'HCVC nguy cơ cao (LVEF ≤40%, THA, ĐTĐ hoặc STEMI thành trước): ACEi hoặc ARB đường uống.'},
+ a_acs_aceilow:{g:'AHA-ACS25',c:'2a',l:'A',t:'HCVC không thuộc nhóm nguy cơ cao: ACEi hoặc ARB đường uống là hợp lý.'},
+ a_acs_mra:{g:'AHA-ACS25',c:'1',l:'B-R',t:'HCVC có LVEF ≤40% kèm triệu chứng suy tim và/hoặc ĐTĐ: MRA.'},
+ a_acs_colch:{g:'AHA-ACS25',c:'2b',l:'B-R',t:'Sau HCVC: colchicine liều thấp có thể hợp lý để giảm MACE (tránh khi CrCl <15 mL/ph, suy gan nặng, rối loạn tạo máu, đang dùng thuốc ức chế mạnh P-gp/CYP3A4).'},
+ a_acs_flu:{g:'AHA-ACS25',c:'1',l:'A',t:'Tiêm vaccine cúm hằng năm cho BN HCVC không chống chỉ định.'},
+ a_acs_rehab:{g:'AHA-ACS25',c:'1',l:'A',t:'Chuyển BN HCVC tới chương trình phục hồi chức năng tim ngoại trú trước khi ra viện.'},
+ a_ccd_bb40:{g:'AHA-CCD23',c:'1',l:'A',t:'Bệnh mạch vành mạn có LVEF ≤40% (có hoặc không có NMCT): chẹn beta để giảm MACE, kể cả tử vong tim mạch.'},
+ a_ccd_bb50:{g:'AHA-CCD23',c:'1',l:'A',t:'LVEF <50%: ưu tiên metoprolol succinate phóng thích kéo dài, carvedilol hoặc bisoprolol, tăng liều tới đích.'},
+ a_ccd_bbreassess:{g:'AHA-CCD23',c:'2b',l:'B-NR',t:'Đã dùng chẹn beta vì NMCT trước đây, không có LVEF ≤50% (hiện tại/trước đây), đau thắt ngực, loạn nhịp hoặc THA chưa kiểm soát: có thể hợp lý đánh giá lại chỉ định dùng chẹn beta lâu dài (>1 năm).'},
+ a_ccd_bbno:{g:'AHA-CCD23',c:'3: No benefit',l:'B-NR',t:'Không có NMCT trước đây và LVEF >50%: chẹn beta không giúp giảm MACE nếu không có chỉ định chính khác.'},
+ a_ccd_raas:{g:'AHA-CCD23',c:'1',l:'A',t:'Bệnh mạch vành mạn kèm THA, ĐTĐ, LVEF ≤40% hoặc CKD: ACEi (ARB nếu không dung nạp ACEi).'},
+ a_ccd_raasno:{g:'AHA-CCD23',c:'2b',l:'B-R',t:'Bệnh mạch vành mạn không THA, ĐTĐ, CKD và LVEF >40%: có thể cân nhắc ACEi hoặc ARB.'},
+ a_ccd_sglt2hf:{g:'AHA-CCD23',c:'1',l:'A',t:'Bệnh mạch vành mạn + suy tim LVEF ≤40%: ức chế SGLT2 bất kể tình trạng ĐTĐ.'},
+ a_ccd_sglt2hfp:{g:'AHA-CCD23',c:'2a',l:'B-R',t:'Bệnh mạch vành mạn + suy tim LVEF >40%: ức chế SGLT2 có thể có lợi (giảm nhập viện vì suy tim).'},
+ a_ccd_colch:{g:'AHA-CCD23',c:'2b',l:'B-R',t:'Bệnh mạch vành mạn: có thể cân nhắc thêm colchicine để giảm biến cố ASCVD tái phát.'},
+ a_ccd_flu:{g:'AHA-CCD23',c:'1',l:'A',t:'Bệnh mạch vành mạn: tiêm vaccine cúm hằng năm.'},
+ a_ccd_rehab:{g:'AHA-CCD23',c:'1',l:'A / B-R',t:'Bệnh mạch vành mạn có chỉ định phù hợp: chuyển tới chương trình phục hồi chức năng tim.'},
+ a_ccd_smoke:{g:'AHA-CCD23',c:'1',l:'A',t:'Người hút thuốc: khuyên bỏ thuốc ở mọi lần khám; đánh giá hút thuốc ở mọi lần khám.'}
+};
+
+/* ---------- helpers ---------- */
+function num(v){ if(v===null||v===undefined||v==='') return null; var n=parseFloat(String(v).replace(',','.')); return isNaN(n)?null:n; }
+var PHASES = [
+  {id:'p0', lab:'≤1 tuần', lo:0, hi:0.25},
+  {id:'p1', lab:'1–4 tuần', lo:0.25, hi:1},
+  {id:'p2', lab:'1–3 tháng', lo:1, hi:3},
+  {id:'p3', lab:'3–6 tháng', lo:3, hi:6},
+  {id:'p4', lab:'6–12 tháng', lo:6, hi:12},
+  {id:'p5', lab:'12–24 tháng', lo:12, hi:24},
+  {id:'p6', lab:'>24 tháng', lo:24, hi:999}
+];
+function phaseFromMonths(m){ for(var i=0;i<PHASES.length;i++){ if(m < PHASES[i].hi || i===PHASES.length-1) return PHASES[i].id; } return 'p6'; }
+function phaseIdx(id){ for(var i=0;i<PHASES.length;i++) if(PHASES[i].id===id) return i; return 0; }
+
+function egfrCKDEPI(scrMgdl, age, female){
+  if(!scrMgdl||!age) return null;
+  var k = female?0.7:0.9, a = female?-0.241:-0.302;
+  var r = scrMgdl/k;
+  var e = 142*Math.pow(Math.min(r,1),a)*Math.pow(Math.max(r,1),-1.200)*Math.pow(0.9938,age)*(female?1.012:1);
+  return Math.round(e);
+}
+function crclCG(scrMgdl, age, wt, female){
+  if(!scrMgdl||!age||!wt) return null;
+  var c = (140-age)*wt/(72*scrMgdl); if(female) c*=0.85; return Math.round(c);
+}
+
+/* derive computed values */
+function derive(s){
+  var d = {};
+  d.age = num(s.age); d.female = s.sex==='f'; d.wt = num(s.wt); d.ht = num(s.ht);
+  d.bmi = (d.wt&&d.ht)? Math.round(d.wt/Math.pow(d.ht/100,2)*10)/10 : null;
+  d.acs = (s.setting==='stemi'||s.setting==='nstemi'||s.setting==='ua');
+  d.mi = (s.setting==='stemi'||s.setting==='nstemi'||(s.hx||[]).indexOf('priorMI')>=0);
+  d.phase = s.phase||'p0'; d.pi = phaseIdx(d.phase);
+  var cr = num(s.cr); d.scr = cr===null?null:(s.crU==='mg'?cr:cr/88.4);
+  d.egfr = egfrCKDEPI(d.scr, d.age, d.female);
+  d.crcl = crclCG(d.scr, d.age, d.wt, d.female);
+  var ua = num(s.uacr); d.uacr = ua===null?null:(s.uacrU==='mgmmol'?ua*8.84:ua); // mg/g
+  d.dialysis = !!s.dialysis;
+  d.ckd = d.dialysis || (d.egfr!==null && d.egfr<60) || (d.uacr!==null && d.uacr>=30);
+  d.hb = num(s.hb); d.plt = num(s.plt);
+  d.dm = s.dm==='t2';
+  d.htn = s.htn==='yes';
+  d.sbp = num(s.sbp); d.dbp = num(s.dbp);
+  d.lvef = num(s.lvef); d.hf = !!s.hfsx || (s.hx||[]).indexOf('hf')>=0;
+  d.hx = s.hx||[]; d.feat = s.feat||[]; d.ap = s.ap||[]; d.bl = s.bl||[];
+  d.oac = s.oac||'none'; d.oacInd = s.oacInd||'none';
+  d.onDAPT = d.ap.length>=2; d.onAny = d.ap.length>0;
+  d.potent = d.ap.indexOf('tica')>=0 || d.ap.indexOf('pras')>=0;
+  // LDL in mg/dL
+  function toMg(v,u){ v=num(v); if(v===null) return null; return u==='mg'?v:Math.round(v*38.67); }
+  d.ldl = toMg(s.ldl, s.lipU); d.ldl0 = toMg(s.ldl0, s.lipU);
+  var tc = toMg(s.tc, s.lipU), hdl = toMg(s.hdl, s.lipU);
+  d.nonhdl = (tc!==null&&hdl!==null)? tc-hdl : null;
+  var tg = num(s.tg); d.tg = tg===null?null:(s.lipU==='mg'?tg:Math.round(tg*88.57));
+  var lpa = num(s.lpa); d.lpaMg = lpa===null?null:(s.lpaU==='nmol'?lpa/2.1:lpa); d.lpaRaw=lpa;
+  d.statin = s.statin||'none'; d.addon = s.addon||[]; d.statinIntol = !!s.statinIntol;
+  d.a1c = num(s.a1c); d.dmdrug = s.dmdrug||[];
+  d.smoker = s.smoke==='cur';
+  // ARC-HBR
+  var maj=[], min=[];
+  if(d.age!==null && d.age>=75) min.push('Tuổi ≥75');
+  if(d.oacInd!=='none' || d.oac!=='none') maj.push('Dự kiến dùng OAC lâu dài');
+  if(d.dialysis || (d.egfr!==null && d.egfr<30)) maj.push('CKD nặng/giai đoạn cuối (eGFR <30)');
+  else if(d.egfr!==null && d.egfr<60) min.push('CKD trung bình (eGFR 30–59)');
+  if(d.hb!==null){ if(d.hb<110) maj.push('Hb <11 g/dL'); else if((d.female && d.hb<120) || (!d.female && d.hb<130)) min.push('Hb 11–12,9 g/dL (nam) / 11–11,9 g/dL (nữ)'); }
+  if(d.plt!==null && d.plt<100) maj.push('Giảm tiểu cầu vừa–nặng (<100 G/L)');
+  var BLM = {bleed6:'Chảy máu tự phát cần nhập viện/truyền máu trong 6 tháng (hoặc bất kỳ lúc nào nếu tái phát)', diath:'Rối loạn đông máu mạn tính', cirr:'Xơ gan có tăng áp lực tĩnh mạch cửa', cancer:'Ung thư đang hoạt động (trừ ung thư da không hắc tố) trong 12 tháng', ich:'XHN do chấn thương trong 12 tháng / dị dạng động–tĩnh mạch não / đột quỵ thiếu máu vừa–nặng trong 6 tháng', surgnow:'Phẫu thuật lớn không trì hoãn được khi đang DAPT', surgrecent:'Phẫu thuật lớn hoặc chấn thương lớn trong 30 ngày trước PCI'};
+  var BLm = {bleed12:'Chảy máu tự phát cần nhập viện/truyền máu trong 12 tháng (không thuộc tiêu chí chính)'};
+  d.bl.forEach(function(k){ if(BLM[k]) maj.push(BLM[k]); if(BLm[k]) min.push(BLm[k]); });
+  if(d.hx.indexOf('ichx')>=0) maj.push('Tiền sử xuất huyết nội sọ tự phát');
+  if(d.hx.indexOf('stroke')>=0 && d.bl.indexOf('ich')<0) min.push('Đột quỵ thiếu máu bất kỳ lúc nào (không thuộc tiêu chí chính)');
+  if((s.otherdrug||[]).indexOf('nsaid')>=0) min.push('Dùng NSAID hoặc corticoid đường uống kéo dài');
+  d.hbrMaj=maj; d.hbrMin=min; d.hbr = maj.length>=1 || min.length>=2;
+  d.giRisk = !!s.gi;
+  // Ischaemic risk (ESC 2024 CCS footnote c criteria)
+  var anat = {lm:'Đặt stent thân chung', plad:'Đặt stent LAD đoạn gần', last:'Stent động mạch còn lại duy nhất', subopt:'Đặt stent chưa tối ưu', long:'Tổng chiều dài stent >60 mm', bif2:'Chỗ chia đôi đặt 2 stent', cto:'Can thiệp tắc mạn tính hoàn toàn (CTO)', st:'Tiền sử huyết khối stent khi đang dùng chống huyết khối đầy đủ'};
+  d.ischAnat = []; d.feat.forEach(function(k){ if(anat[k]) d.ischAnat.push(anat[k]); });
+  d.ischClin = []; if(d.dm) d.ischClin.push('Đái tháo đường'); if(d.ckd) d.ischClin.push('Bệnh thận mạn');
+  var auto = d.ischAnat.length? 'high' : (d.ischClin.length? 'mod':'low');
+  d.ischAuto = auto; d.isch = (s.ischOv && s.ischOv!=='auto')? s.ischOv : auto;
+  d.ischHigh = d.isch==='high';
+  d.highThrombStent = d.feat.some(function(k){return ['lm','bif2','subopt','st','cyp'].indexOf(k)>=0;});
+  // CHA2DS2-VA (V=1: coronary revascularisation)
+  var cha = 1, chaParts=['V (bệnh mạch vành/tái thông) +1'];
+  if(d.hf || (d.lvef!==null && d.lvef<=40)){cha+=1; chaParts.push('C +1');}
+  if(d.htn){cha+=1; chaParts.push('H +1');}
+  if(d.age!==null && d.age>=75){cha+=2; chaParts.push('A ≥75 +2');} else if(d.age!==null && d.age>=65){cha+=1; chaParts.push('A 65–74 +1');}
+  if(d.dm){cha+=1; chaParts.push('D +1');}
+  if(d.hx.indexOf('stroke')>=0 || d.hx.indexOf('tia')>=0){cha+=2; chaParts.push('S +2');}
+  d.cha=cha; d.chaParts=chaParts;
+  // ACC/AHA 2026 very-high-risk (Figure 10)
+  var major=[], hrc=[];
+  if(d.acs && d.pi<=4) major.push('HCVC trong 12 tháng');
+  if(d.hx.indexOf('priorMI')>=0 || (d.acs && d.mi && d.pi>=5)) major.push('Tiền sử NMCT (ngoài HCVC trên)');
+  if(d.hx.indexOf('stroke')>=0) major.push('Tiền sử đột quỵ thiếu máu');
+  if(d.hx.indexOf('pad')>=0) major.push('Bệnh động mạch ngoại biên có triệu chứng');
+  if(d.age!==null && d.age>=65) hrc.push('Tuổi ≥65');
+  hrc.push('Đã can thiệp/phẫu thuật bắc cầu ĐMV');
+  if(d.smoker) hrc.push('Đang hút thuốc');
+  if(d.dm) hrc.push('Đái tháo đường');
+  if(d.hf) hrc.push('Tiền sử suy tim');
+  if(d.htn) hrc.push('Tăng huyết áp');
+  if(d.ldl!==null && d.ldl>=100 && d.statin==='high' && d.addon.indexOf('eze')>=0) hrc.push('LDL-C ≥100 mg/dL dù statin tối đa + ezetimibe');
+  d.vhrMajor=major; d.vhrHrc=hrc;
+  d.vhr = major.length>=2 || (major.length>=1 && hrc.length>=2);
+  // ESC LDL goal
+  d.recurrent = d.hx.indexOf('recur2y')>=0;
+  d.escLdlGoal = 55; d.ahaLdlGoal = d.vhr?55:70; d.ahaNonHdlGoal = d.vhr?85:100;
+  return d;
+}
+
+function I(id, st, why){ return {id:id, st:st||'do', why:why||''}; }
+
+/* ---------- Antithrombotic ---------- */
+function antithrombotic(s,d){
+  var esc=[], aha=[], warn=[], notes=[];
+  var p=d.pi; // 0..6
+  var oacNeed = d.oacInd!=='none';
+  var acs=d.acs;
+  var plan = {esc:[], aha:[]}; // timeline segments
+  if(s.stent==='dcb'||s.stent==='bms'){
+    notes.push((s.stent==='dcb'?'Nong bóng phủ thuốc (DCB)':'Stent kim loại trần (BMS)')+': các khuyến cáo về thời gian DAPT trong những hướng dẫn được dùng ở đây xây dựng chủ yếu từ PCI đặt DES; không có khuyến cáo riêng cho '+(s.stent==='dcb'?'DCB':'BMS')+'. AHA/ACC 2023 dẫn chiếu Hướng dẫn DAPT 2016 cho BMS. Cần cá thể hoá.');
+  }
+  if(oacNeed){
+    // ---- OAC pathway ----
+    if(d.oacInd==='af'){
+      esc.push(I('e_af_oac'));
+      esc.push(I(d.cha>=2?'e_af_cha2':'e_af_cha1','do','CHA₂DS₂-VA = '+d.cha));
+    }
+    if(d.oacInd==='mech'){
+      esc.push(I('e_af_doacvalve','no','Van cơ học: dùng VKA, không dùng DOAC'));
+      notes.push('Van tim cơ học: các khuyến cáo phối hợp OAC + kháng tiểu cầu dưới đây chủ yếu xây dựng trên BN rung nhĩ; với van cơ học, OAC phải là VKA.');
+    } else {
+      esc.push(I('e_af_doacpref', d.oac==='vka'?'opt':'do', d.oac==='vka'?'Đang dùng VKA':''));
+      esc.push(I('e_ccs_doac','do'));
+    }
+    if(d.oacInd!=='af' && d.oacInd!=='mech') notes.push('Chỉ định OAC ngoài rung nhĩ (vd. huyết khối tĩnh mạch): các hướng dẫn ở đây xây dựng phác đồ phối hợp chủ yếu từ BN rung nhĩ; ESC 2024 CCS và ACC/AHA 2025 HCVC áp dụng cho “BN có chỉ định OAC”.');
+    if(acs){
+      esc.push(I('e_acs_oac', p<=4?'do':'info', 'Triple ≤1 tuần → OAC + clopidogrel tới 12 tháng'));
+      if(d.oacInd==='af') esc.push(I('e_af_acs', p<=4?'do':'info'));
+      esc.push(I('e_acs_oac1m', d.ischHigh && p<=1?'opt':(p<=1?'opt':'info')));
+      if(d.oacInd==='af') esc.push(I('e_af_acs1m', p<=1?'opt':'info'));
+      if(p>=3 && p<=4) esc.push(I('e_acs_oac6','opt'));
+      esc.push(I('e_acs_oac12', p>=5?'do':'info', p>=5?'Đã quá 12 tháng: ngừng kháng tiểu cầu':'Kế hoạch: ngừng kháng tiểu cầu ở 12 tháng'));
+      plan.esc=[{a:0,b:1,t:'Bộ ba ≤1 tuần (≤1 th nếu NC cao)',k:'tri'},{a:1,b:5,t:'OAC + clopidogrel',k:'dual'},{a:5,b:7,t:'OAC đơn độc',k:'oac'}];
+      aha.push(I('a_acs_oac', p<=4?'do':'info'));
+      if(p>=5){ aha.push(I('a_ccd_oac1y','opt')); aha.push(I('a_ccd_doacmono','opt')); }
+      plan.aha=[{a:0,b:1.6,t:'Bộ ba 1–4 tuần',k:'tri'},{a:1.6,b:5,t:'OAC + P2Y12 (ưu tiên clopidogrel)',k:'dual'},{a:5,b:7,t:'Có thể DOAC đơn độc (CCD 2023, 2b)',k:'oac'}];
+    } else {
+      esc.push(I('e_ccs_oacasp', p===0?'do':'info'));
+      esc.push(I('e_ccs_oacreg', p<=5?'do':'info', d.ischHigh?'Nguy cơ thiếu máu cao → OAC + clopidogrel tới 12 tháng':'Không nguy cơ thiếu máu cao → OAC + clopidogrel tới 6 tháng'));
+      if(d.oacInd==='af') esc.push(I('e_af_pci', p<=3?'do':'info'));
+      esc.push(I('e_ccs_oacasp1m', p<=1?'opt':'info'));
+      if(d.oacInd==='af') esc.push(I('e_af_pci1m', p<=1?'opt':'info'));
+      var endDual = d.ischHigh?5:4;
+      plan.esc=[{a:0,b:1,t:'Bộ ba ≤1 tuần (≤1 th nếu NC cao)',k:'tri'},{a:1,b:endDual,t:'OAC + clopidogrel',k:'dual'},{a:endDual,b:7,t:'OAC đơn độc',k:'oac'}];
+      aha.push(I('a_ccd_oac', p<=3?'do':'info'));
+      aha.push(I('a_ccd_oacasp', p<=1?'opt':'info'));
+      if(p>=4) aha.push(I('a_ccd_doacmono','opt'));
+      if(p>=5) aha.push(I('a_ccd_oac1y','opt'));
+      plan.aha=[{a:0,b:1.6,t:'DAPT + DOAC 1–4 tuần',k:'tri'},{a:1.6,b:4,t:'DOAC + clopidogrel tới 6 tháng',k:'dual'},{a:4,b:7,t:'Có thể DOAC đơn độc (2b)',k:'oac'}];
+    }
+    esc.push(I('e_ccs_oaclife', p>=4?'do':'info'));
+    if(d.oacInd==='af') esc.push(I('e_af_no12', p>=5?'no':'info'));
+    esc.push(I(acs?'e_acs_notp':'e_ccs_notp','no'));
+    if(d.oac==='riva'){ esc.push(I(acs?'e_acs_riva15':'e_ccs_riva15', d.hbr?'opt':'info')); }
+    if(d.oac==='dabi'){ esc.push(I(acs?'e_acs_dabi110':'e_ccs_dabi110', d.hbr?'opt':'info')); }
+    if(d.oac==='vka'){ esc.push(I(acs?'e_acs_vka':'e_ccs_vka','do')); if(d.oacInd==='af') esc.push(I('e_af_vka','do')); }
+    // CKD + AF
+    if(d.oacInd==='af' && d.egfr!==null){
+      if(d.egfr>=30) esc.push(I('e_ckd_af30','do','eGFR '+d.egfr));
+      else if(d.egfr>=15) esc.push(I('e_ckd_af15','do','eGFR '+d.egfr));
+      else esc.push(I('e_ckd_af0','do','eGFR '+d.egfr));
+    }
+    // warnings
+    if(d.potent && d.ap.indexOf('asp')>=0) warn.push({lvl:'no', t:'Đang dùng ticagrelor/prasugrel trong phác đồ bộ ba với OAC.', refs:[acs?'e_acs_notp':'e_ccs_notp']});
+    else if(d.potent) warn.push({lvl:'opt', t:'Đang phối hợp OAC với ticagrelor/prasugrel: các hướng dẫn ưu tiên clopidogrel khi phối hợp với OAC.', refs:[acs?'e_acs_oac':'e_ccs_oacreg', acs?'a_acs_oac':'a_ccd_oac']});
+    if(d.ap.indexOf('asp')>=0 && d.ap.length>=2 && p>=2) warn.push({lvl:'no', t:'Vẫn dùng aspirin trong phác đồ bộ ba khi đã quá 1 tháng sau PCI (ESC: ≤1 tuần, tối đa 1 tháng; ACC/AHA: 1–4 tuần).', refs:[acs?'e_acs_oac':'e_ccs_oacreg', acs?'a_acs_oac':'a_ccd_oac']});
+    if(d.onAny && p>=5) warn.push({lvl:'no', t:'Đang dùng kháng tiểu cầu cùng OAC khi đã quá 12 tháng sau PCI.', refs:['e_acs_oac12','e_af_no12']});
+    if(!acs && d.onAny && p===4 && !d.ischHigh) warn.push({lvl:'opt', t:'HCVM mạn, không nguy cơ thiếu máu cao: ESC khuyến cáo dừng kháng tiểu cầu sau 6 tháng và dùng OAC đơn độc.', refs:['e_ccs_oacreg']});
+    if(d.oac==='none') warn.push({lvl:'no', t:'Có chỉ định OAC nhưng chưa chọn thuốc kháng đông đang dùng.', refs:[]});
+  } else {
+    // ---- No OAC ----
+    if(acs){
+      var nste = s.setting!=='stemi';
+      esc.push(I('e_acs_asp','do'));
+      if(p<=4){
+        esc.push(I('e_acs_dapt', d.hbr?'opt':'do', d.hbr?'Có HBR: xem các chiến lược rút ngắn':'Không HBR'));
+        esc.push(I('e_acs_tica', 'info')); var noPras = d.hx.indexOf('stroke')>=0||d.hx.indexOf('tia')>=0||d.hx.indexOf('ichx')>=0;
+        esc.push(I('e_acs_pras', 'info', noPras?'Tiền sử đột quỵ/TIA/XHN: xem khuyến cáo ACC/AHA (3: Harm)':''));
+        esc.push(I('e_acs_praspref', (!noPras && p===0 && !d.potent)?'opt':'info', p>0?'Liên quan lựa chọn thuốc lúc PCI':''));
+        esc.push(I('e_acs_clopi','info'));
+        if(d.age!==null && d.age>=70) esc.push(I('e_acs_clopiold', d.hbr?'opt':'info'));
+        if(p<=1) esc.push(I('e_acs_no30','no','Đang trong 30 ngày đầu'));
+        if(d.hbr) esc.push(I('e_acs_hbr1m', p>=1?'opt':'info', 'Có HBR'));
+        esc.push(I('e_acs_deesc', p>=2?'opt':'info', p<2?'Chỉ sau 30 ngày đầu':''));
+        esc.push(I('e_acs_sapt36', p>=3?(d.ischHigh?'info':'opt'):'info', p<3?'Áp dụng khi đủ 3–6 tháng':(d.ischHigh?'Đang được xếp nguy cơ thiếu máu cao':'')));
+        if(d.ckd) esc.push(I('e_ckd_acsdapt', p>=1?'opt':'info','Có CKD'));
+      } else {
+        esc.push(I('e_ccs_asplife','do'));
+        esc.push(I('e_ccs_clopialt','opt'));
+        esc.push(I('e_acs_p2y12mono','opt'));
+        if(d.ckd){ esc.push(I('e_ckd_sapt','do')); if(d.egfr!==null && d.egfr>30) esc.push(I('e_ckd_clopi','opt')); }
+        if(!d.hbr){
+          if(d.isch==='high') esc.push(I('e_acs_exthigh','opt'));
+          else if(d.isch==='mod') esc.push(I('e_acs_extmod','opt'));
+          esc.push(I('e_ccs_ext', d.isch!=='low'?'opt':'info'));
+          if(d.isch==='high' && d.ap.indexOf('tica')>=0) esc.push(I('e_ccs_ticamono','opt'));
+        }
+      }
+      // ESC timeline
+      if(d.hbr) plan.esc=[{a:0,b:2,t:'DAPT 1 tháng (HBR)',k:'dapt'},{a:2,b:7,t:'Đơn trị kháng tiểu cầu',k:'sapt'}];
+      else plan.esc=[{a:0,b:5,t:'DAPT 12 tháng (aspirin + prasugrel/ticagrelor)',k:'dapt'},{a:5,b:7,t:'SAPT lâu dài ± kéo dài nếu nguy cơ thiếu máu cao',k:'sapt'}];
+      // AHA
+      if(p<=4) aha.push(I('a_acs_asp','do'));
+      if(p<=4){
+        aha.push(I('a_acs_dapt', d.hbr?'opt':'do', d.hbr?'Có HBR':'Không HBR'));
+        aha.push(I(nste?'a_acs_nstept':'a_acs_stemipt','info'));
+        aha.push(I(nste?'a_acs_nsteclopi':'a_acs_stemiclopi','info'));
+        aha.push(I('a_acs_ticamono', (p>=2 && d.ap.indexOf('tica')>=0)?'opt':'info', p<2?'Sau ≥1 tháng':(d.ap.indexOf('tica')<0?'Áp dụng nếu đang DAPT với ticagrelor':'')));
+        aha.push(I('a_acs_deesc', p>=2?'opt':'info'));
+        if(d.hbr) aha.push(I('a_acs_hbr', p>=2?'opt':'info','Có HBR'));
+      } else {
+        aha.push(I('a_ccd_asp','do'));
+        if(d.mi && !d.hbr) aha.push(I('a_ccd_extdapt', p===5?'opt':'info', p===6?'Chỉ tới 3 năm':''));
+        if(d.isch==='high' && !d.hbr) aha.push(I('a_ccd_riva','opt'));
+      }
+      if(d.hx.indexOf('stroke')>=0 || d.hx.indexOf('tia')>=0 || d.hx.indexOf('ichx')>=0) aha.push(I('a_acs_prasstroke','no'));
+      if(d.hbr) plan.aha=[{a:0,b:2,t:'DAPT 1 tháng (HBR)',k:'dapt'},{a:2,b:7,t:'Đơn trị kháng tiểu cầu',k:'sapt'}];
+      else plan.aha=[{a:0,b:5,t:'DAPT ≥12 tháng (hoặc ticagrelor đơn trị sau ≥1 tháng)',k:'dapt'},{a:5,b:7,t:'Aspirin lâu dài; DAPT tới 3 năm nếu NMCT & chảy máu thấp (2b)',k:'sapt'}];
+    } else {
+      // CCS elective
+      if(p<=3){
+        esc.push(I('e_ccs_dapt6', (d.hbr && !d.ischHigh)?'opt':'do'));
+        if(d.hbr && !d.ischHigh) esc.push(I('e_ccs_hbr13', p>=1?'do':'info','HBR, không nguy cơ thiếu máu cao'));
+        if(!d.hbr && !d.ischHigh) esc.push(I('e_ccs_short', p>=1?'opt':'info'));
+        if(d.highThrombStent) esc.push(I('e_ccs_potent', p<=3?'opt':'info'));
+        if(d.ckd) esc.push(I('e_ckd_ccsdapt', p>=1?'opt':'info','Có CKD'));
+      } else {
+        esc.push(I('e_ccs_dapt6','info','Đã qua 6 tháng'));
+      }
+      esc.push(I('e_ccs_asplife', p>=2?'do':'info'));
+      esc.push(I('e_ccs_clopialt', p>=2?'opt':'info'));
+      if(d.ckd){ esc.push(I('e_ckd_sapt', p>=2?'do':'info')); if(d.egfr!==null && d.egfr>30) esc.push(I('e_ckd_clopi', p>=2?'opt':'info')); }
+      if(p>=4 && !d.hbr){ esc.push(I('e_ccs_ext', d.isch!=='low'?'opt':'info')); }
+      var dEnd = (d.hbr && !d.ischHigh)?2.5:4;
+      plan.esc=[{a:0,b:dEnd,t:(d.hbr&&!d.ischHigh)?'DAPT 1–3 tháng (HBR)':'DAPT aspirin + clopidogrel 6 tháng',k:'dapt'},{a:dEnd,b:7,t:'Aspirin (hoặc clopidogrel) suốt đời',k:'sapt'}];
+      aha.push(I('a_ccd_dapt6', p<=3?'do':'info'));
+      if(s.stent!=='bms') aha.push(I('a_ccd_p2y12mono', (p>=2 && p<=5)?'opt':'info'));
+      aha.push(I('a_ccd_asp', p>=4?'do':'info'));
+      if(d.mi && !d.hbr) aha.push(I('a_ccd_extdapt', p>=4&&p<=5?'opt':'info'));
+      if(d.isch==='high' && !d.hbr && p>=4) aha.push(I('a_ccd_riva','opt'));
+      if(p>=4) aha.push(I('a_ccd_noclopi','no'));
+      if(d.hx.indexOf('stroke')>=0 || d.hx.indexOf('tia')>=0 || d.hx.indexOf('ichx')>=0) aha.push(I('a_ccd_prasstroke','no'));
+      plan.aha=[{a:0,b:4,t:'DAPT 6 tháng (hoặc P2Y12 đơn trị sau 1–3 tháng, 2a)',k:'dapt'},{a:4,b:7,t:'Aspirin 75–100 mg lâu dài',k:'sapt'}];
+    }
+    // warnings no-OAC
+    if(!d.onAny) warn.push({lvl:'no', t:'Chưa chọn thuốc kháng tiểu cầu đang dùng – BN sau PCI cần ít nhất một thuốc kháng tiểu cầu (trừ khi dùng OAC).', refs:[acs?'e_acs_asp':'e_ccs_asplife']});
+    if(d.ap.indexOf('pras')>=0 && (d.hx.indexOf('stroke')>=0||d.hx.indexOf('tia')>=0||d.hx.indexOf('ichx')>=0)) warn.push({lvl:'no', t:'Đang dùng prasugrel ở BN có tiền sử đột quỵ/TIA/XHN.', refs:['a_acs_prasstroke','a_ccd_prasstroke']});
+    if(d.ap.indexOf('pras')>=0 && ((d.age!==null&&d.age>=75)||(d.wt!==null&&d.wt<60))) warn.push({lvl:'opt', t:'Prasugrel ở BN ≥75 tuổi hoặc <60 kg: liều duy trì 5 mg/ngày.', refs:['e_acs_pras']});
+    if(d.ap.indexOf('tica')>=0 && d.ap.indexOf('pras')>=0) warn.push({lvl:'no', t:'Đang chọn cả ticagrelor và prasugrel – chỉ dùng một thuốc ức chế P2Y12.', refs:[]});
+    if(d.ap.indexOf('clopi')>=0 && (d.ap.indexOf('tica')>=0||d.ap.indexOf('pras')>=0)) warn.push({lvl:'no', t:'Đang chọn đồng thời clopidogrel và ticagrelor/prasugrel – chỉ dùng một thuốc ức chế P2Y12.', refs:[]});
+    if(acs && p<=1 && d.onDAPT && d.ap.indexOf('clopi')>=0 && s.switched) warn.push({lvl:'no', t:'Xuống thang trong 30 ngày đầu sau HCVC.', refs:['e_acs_no30']});
+    if(acs && !d.onDAPT && d.onAny && p<=1) warn.push({lvl:'no', t:'Đang đơn trị kháng tiểu cầu trong tháng đầu sau HCVC (sớm hơn mọi chiến lược rút ngắn được khuyến cáo).', refs:['e_acs_dapt','e_acs_hbr1m','a_acs_hbr']});
+    if(acs && d.onDAPT && p>=5 && d.hbr) warn.push({lvl:'no', t:'Vẫn DAPT sau 12 tháng ở BN có HBR – kéo dài thuốc chống huyết khối thứ hai chỉ được khuyến cáo khi KHÔNG có HBR.', refs:['e_acs_exthigh','e_acs_extmod']});
+    if(acs && d.onDAPT && p>=5 && !d.hbr) warn.push({lvl:'opt', t:'DAPT sau 12 tháng: chỉ hợp lý khi nguy cơ thiếu máu cao/trung bình và không HBR (ESC IIa/IIb-A); ACC/AHA: tới 3 năm nếu có NMCT và nguy cơ chảy máu thấp (2b-A).', refs:['e_acs_exthigh','a_ccd_extdapt']});
+    if(!acs && d.onDAPT && p>=4) warn.push({lvl: d.hbr?'no':'opt', t:'HCVM mạn đã quá 6 tháng mà vẫn DAPT (mặc định ESC/ACC-AHA: 6 tháng).', refs:['e_ccs_dapt6','a_ccd_dapt6','a_ccd_noclopi']});
+    if(!acs && d.onDAPT && d.hbr && !d.ischHigh && p>=3) warn.push({lvl:'no', t:'HBR, không nguy cơ thiếu máu cao: ESC khuyến cáo ngừng DAPT sau 1–3 tháng.', refs:['e_ccs_hbr13']});
+    if(!acs && d.potent && p>=3 && !d.highThrombStent) warn.push({lvl:'opt', t:'HCVM mạn: DAPT mặc định dùng clopidogrel; prasugrel/ticagrelor chỉ cân nhắc khi đặt stent nguy cơ huyết khối cao, tới 3–6 tháng.', refs:['e_ccs_dapt6','e_ccs_potent']});
+  }
+  // PPI
+  if(d.giRisk){
+    if(acs) { esc.push(I('e_acs_ppi','do')); }
+    esc.push(I((d.onDAPT||(d.oac!=='none'&&d.onAny))?'e_ccs_ppi':'e_ccs_ppi1', (d.onDAPT||(d.oac!=='none'&&d.onAny))?'do':'opt'));
+    aha.push(I('a_acs_ppi','do'));
+    if(!acs) aha.push(I('a_ccd_ppi','do'));
+    if((s.otherdrug||[]).indexOf('ppi')<0) warn.push({lvl:'opt', t:'Nguy cơ xuất huyết tiêu hoá cao nhưng chưa ghi nhận PPI.', refs:['e_ccs_ppi','a_acs_ppi']});
+  }
+  if((s.otherdrug||[]).indexOf('nsaid')>=0){ aha.push(I('a_ccd_nsaid','no')); warn.push({lvl:'no', t:'Đang dùng NSAID kéo dài.', refs:['a_ccd_nsaid']}); }
+  // DOAC dose check
+  var dd = doacDose(s,d); if(dd) { dd.forEach(function(w){warn.push(w);}); }
+  return {esc:esc, aha:aha, warn:warn, notes:notes, plan:plan};
+}
+
+function doacDose(s,d){
+  var out=[]; if(d.oac==='none'||d.oac==='vka') return out;
+  var red = s.oacDose==='red';
+  var crit=false, why=[];
+  if(d.oac==='apix'){
+    var n=0; if(d.age>=80){n++;why.push('≥80 tuổi');} if(d.wt!==null&&d.wt<=60){n++;why.push('≤60 kg');} if(d.scr!==null&&d.scr*88.4>=133){n++;why.push('creatinine ≥133 µmol/L');}
+    crit = n>=2;
+    if(red && !crit) out.push({lvl:'no', t:'Apixaban 2,5 mg × 2 nhưng chưa đủ 2/3 tiêu chí giảm liều ('+(why.join(', ')||'không có tiêu chí nào')+').', refs:['e_af_lowdose']});
+    if(!red && crit) out.push({lvl:'opt', t:'Apixaban: BN có ≥2/3 tiêu chí giảm liều ('+why.join(', ')+') → liều 2,5 mg × 2 theo Bảng 11 ESC 2024 RN.', refs:[]});
+  }
+  if(d.oac==='riva'){
+    crit = d.crcl!==null && d.crcl>=15 && d.crcl<50;
+    var bleedOK = d.hbr && d.onAny;
+    if(red && !crit && !bleedOK) out.push({lvl:'no', t:'Rivaroxaban 15 mg nhưng CrCl '+(d.crcl===null?'chưa tính được':d.crcl+' mL/ph')+' và không có lý do HBR khi phối hợp kháng tiểu cầu.', refs:['e_af_lowdose','e_af_riva15']});
+    if(!red && crit) out.push({lvl:'opt', t:'Rivaroxaban: CrCl '+d.crcl+' mL/ph (15–49) → liều 15 mg/ngày.', refs:[]});
+  }
+  if(d.oac==='dabi'){
+    var must = (d.age!==null&&d.age>=80) || (s.otherdrug||[]).indexOf('verap')>=0;
+    var consider = (d.age!==null&&d.age>=75&&d.age<80) || (d.crcl!==null&&d.crcl>=30&&d.crcl<=50) || d.hbr;
+    if(!red && must) out.push({lvl:'no', t:'Dabigatran: ≥80 tuổi hoặc dùng verapamil → khuyến cáo giảm liều 110 mg × 2.', refs:[]});
+    if(red && !must && !consider) out.push({lvl:'no', t:'Dabigatran 110 mg × 2 nhưng không có tiêu chí giảm liều.', refs:['e_af_lowdose']});
+  }
+  if(d.oac==='edox'){
+    crit = (d.crcl!==null&&d.crcl>=15&&d.crcl<=50) || (d.wt!==null&&d.wt<=60);
+    if(red && !crit) out.push({lvl:'no', t:'Edoxaban 30 mg nhưng không có tiêu chí giảm liều (CrCl 15–50, ≤60 kg, thuốc tương tác).', refs:['e_af_lowdose']});
+    if(!red && crit) out.push({lvl:'opt', t:'Edoxaban: có tiêu chí giảm liều → 30 mg/ngày.', refs:[]});
+  }
+  return out;
+}
+
+/* ---------- Bleeding ---------- */
+function bleeding(s,d){
+  var esc=[I('e_ccs_bleedassess','do')], aha=[];
+  if(d.oacInd!=='none'){ esc.push(I('e_af_bleedmod','do')); esc.push(I('e_af_noscore','no')); }
+  return {esc:esc, aha:aha};
+}
+
+/* ---------- BP ---------- */
+function bp(s,d){
+  var esc=[], aha=[], tgt={};
+  var lenient = (d.age!==null && d.age>=85) || !!s.oh;
+  var frail = !!s.frail || !!s.lifeShort;
+  if(lenient) { tgt.esc='<140 mmHg (cá thể hoá)'; esc.push(I('e_htn_lenient','do', (d.age>=85?'≥85 tuổi':'Hạ HA tư thế có triệu chứng'))); }
+  else if(frail){ tgt.esc='<140/90 mmHg (cá thể hoá)'; esc.push(I('e_htn_frail','do')); }
+  else tgt.esc='HATT 120–129 mmHg (nếu dung nạp)';
+  if(d.egfr!==null && d.egfr<30 && !d.dialysis){ esc.push(I('e_ckd_bplow','do','eGFR '+d.egfr)); }
+  esc.push(I('e_htn_target', (lenient||frail)?'info':'do'));
+  esc.push(I('e_htn_alara','opt'));
+  if(d.dm) esc.push(I('e_htn_dm', (lenient||frail)?'info':'do'));
+  if(d.ckd && d.egfr!==null && d.egfr>30){ esc.push(I('e_htn_ckd','do')); esc.push(I('e_ckd_bp','do')); }
+  esc.push(I('e_htn_dbp', (d.sbp!==null&&d.sbp<130&&d.dbp!==null&&d.dbp>=80)?'opt':'info'));
+  esc.push(I('e_htn_init130', d.htn||((d.sbp||0)>=130)?'do':'info'));
+  if(d.mi) esc.push(I('e_htn_mi','do'));
+  if(s.angina) esc.push(I('e_htn_angina','do'));
+  esc.push(I('e_htn_first','info'));
+  if((d.sbp!==null&&d.sbp>=140)||(d.dbp!==null&&d.dbp>=90)) esc.push(I('e_htn_combo','do'));
+  esc.push(I('e_htn_ohtest','do'));
+  esc.push(I('e_htn_life','info'));
+  // AHA
+  tgt.aha='<130/80 mmHg, khuyến khích HATT <120';
+  aha.push(I('a_htn_init','do')); aha.push(I('a_htn_goal','do','“Tăng nguy cơ” được định nghĩa theo PREVENT ≥7,5%; BN sau PCI có bệnh tim mạch lâm sàng')); aha.push(I('a_htn_dbp','do'));
+  aha.push(I('a_ccd_bpgoal','do')); aha.push(I('a_ccd_bpdrug','do')); aha.push(I('a_ccd_bplife','info'));
+  if(d.dm){ aha.push(I('a_htn_dm','do')); aha.push(I('a_htn_dmdbp','do')); }
+  if(d.ckd){ aha.push(I('a_htn_ckd','do')); if(d.egfr!==null&&d.egfr<60&&d.uacr!==null&&d.uacr>=30) aha.push(I('a_htn_ckdraas','do')); }
+  // status
+  var st=null;
+  if(d.sbp!==null){
+    var escOK = lenient? d.sbp<140 : (frail? (d.sbp<140&&(d.dbp===null||d.dbp<90)) : (d.sbp<=129));
+    var escLow = !lenient && !frail && d.sbp<120;
+    var ahaOK = d.sbp<130 && (d.dbp===null||d.dbp<80);
+    st={escOK:escOK, escLow:escLow, ahaOK:ahaOK};
+  }
+  return {esc:esc, aha:aha, tgt:tgt, st:st};
+}
+
+/* ---------- Diabetes ---------- */
+function diabetes(s,d){
+  var esc=[], aha=[], tgt={};
+  var onS = d.dmdrug.indexOf('sglt2')>=0, onG = d.dmdrug.indexOf('glp1')>=0;
+  if(d.dm){
+    esc.push(I('e_ccs_sglt2', onS?'info':'do', onS?'Đang dùng':'Chưa dùng'));
+    esc.push(I('e_ccs_glp1', onG?'info':'do', onG?'Đang dùng':'Chưa dùng'));
+    esc.push(I('e_dm23_a1c','do'));
+    if(d.ckd){ esc.push(I('e_ckd_a1c','do')); esc.push(I('e_ckd_dmfirst','do')); if(d.egfr!==null&&d.egfr>=30) esc.push(I('e_ckd_metf','opt')); esc.push(I('e_ckd_insulin','info')); }
+    aha.push(I('a_ccd_sglt2glp1', (onS||onG)?'info':'do'));
+    aha.push(I('a_ckm_life','do'));
+    aha.push(I('a_ckm_sglt2glp1', (onS||onG)?'info':'do'));
+    aha.push(I('a_ckm_combo', (onS&&onG)?'info':'opt'));
+    if(d.hf) aha.push(I('a_ckm_hfsglt2','do'));
+    tgt.esc = d.ckd? 'HbA1c <7% (cá thể hoá 6,5–8% khi có CKD)' : 'HbA1c <7%';
+    tgt.aha = 'HbA1c <7% (nêu trong phần tóm tắt CKM 2026; mục tiêu nới hơn, vd. <8%, nếu tuổi thọ hạn chế hoặc hại > lợi)';
+  } else {
+    if(d.bmi!==null && d.bmi>27) esc.push(I('e_ccs_sema','opt','BMI '+d.bmi));
+  }
+  if(d.bmi!==null && d.bmi>=27){ aha.push(I('a_ckm_obeslife','do','BMI '+d.bmi)); aha.push(I('a_ckm_obes','do','BMI '+d.bmi)); aha.push(I('a_ckm_harm','no')); }
+  var st=null; if(d.dm && d.a1c!==null) st={ok:d.a1c<7};
+  return {esc:esc, aha:aha, tgt:tgt, st:st};
+}
+
+/* ---------- Lipids ---------- */
+function lipids(s,d){
+  var esc=[], aha=[], tgt={};
+  var escGoal = 55;
+  esc.push(I('e_lip_goal','do'));
+  esc.push(I('e_lip_statin', d.statin==='high'?'info':'do', d.statin==='high'?'Đang dùng statin cường độ cao/tối đa':'Chưa ở mức cường độ cao'));
+  var above = d.ldl!==null && d.ldl>=escGoal;
+  var hasE = d.addon.indexOf('eze')>=0, hasP = d.addon.indexOf('pcsk9')>=0 || d.addon.indexOf('incl')>=0, hasB=d.addon.indexOf('bempe')>=0;
+  if(d.statinIntol){
+    esc.push(I('e_lip_nonstatin','do'));
+    esc.push(I('e_lip_bempe_intol', above&&hasE&&!hasB?'do':'info'));
+  }
+  esc.push(I('e_lip_eze', above && !hasE ? 'do':'info'));
+  esc.push(I('e_lip_pcsk9', above && hasE && !hasP ? 'do':'info'));
+  esc.push(I('e_lip_bempe_add', above && !hasB ? 'opt':'info'));
+  if(d.recurrent) esc.push(I('e_lip_40','opt'));
+  if(d.acs && d.pi<=1){ esc.push(I('e_lip_intens','info','Áp dụng trong lần nhập viện')); esc.push(I('e_lip_combo','info','Áp dụng trong lần nhập viện')); }
+  if(d.lpaRaw!==null) esc.push(I('e_lip_lpa', d.lpaMg>50?'do':'info', 'Lp(a) '+d.lpaRaw+(s.lpaU==='nmol'?' nmol/L':' mg/dL')));
+  if(d.tg!==null && d.tg>=135 && d.tg<=499) esc.push(I('e_lip_ipe','opt','TG '+d.tg+' mg/dL'));
+  if(d.ckd && !d.dialysis){ esc.push(I('e_ckd_statin','do')); if(d.egfr!==null&&d.egfr>=20&&((d.ldl!==null&&d.ldl>=70)||(d.nonhdl!==null&&d.nonhdl>=100))) esc.push(I('e_ckd_pcsk9','opt')); }
+  tgt.esc = (d.recurrent?'LDL-C <55 mg/dL (1,4 mmol/L), có thể <40 mg/dL (1,0 mmol/L)':'LDL-C <55 mg/dL (1,4 mmol/L)')+' và giảm ≥50%';
+  // AHA
+  var ag = d.ahaLdlGoal, ab = d.ldl!==null && d.ldl>=ag;
+  if(d.vhr){
+    aha.push(I('a_lip_vhr','do','Nguy cơ rất cao'));
+    aha.push(I('a_lip_vhradd', ab && !(hasE&&hasP) ? 'do':'info'));
+    aha.push(I('a_lip_vhrbempe', ab?'opt':'info'));
+    aha.push(I('a_lip_vhrincl', ab && !hasP?'opt':'info'));
+  } else {
+    aha.push(I('a_lip_nvhr','do','Không thuộc nhóm nguy cơ rất cao'));
+    aha.push(I('a_lip_nvhradd', (d.ldl!==null&&d.ldl>=55)?'opt':'info'));
+  }
+  if(d.acs && d.pi<=4){
+    aha.push(I('a_acs_statin', d.statin==='high'?'info':'do'));
+    if(d.ldl!==null && d.statin==='high'){
+      if(d.ldl>=70) aha.push(I('a_acs_lip70','do','LDL-C '+d.ldl+' mg/dL'));
+      else if(d.ldl>=55) aha.push(I('a_acs_lip55','opt','LDL-C '+d.ldl+' mg/dL'));
+    }
+    if(d.statinIntol) aha.push(I('a_acs_lipintol','do'));
+    aha.push(I('a_acs_lippanel','do'));
+  }
+  aha.push(I('a_lip_mon','do'));
+  aha.push(I('a_lip_lpa', d.lpaRaw===null?'do':'info', d.lpaRaw===null?'Chưa có kết quả Lp(a)':'Đã đo'));
+  if(d.tg!==null && d.tg>=150 && d.tg<=999 && d.ldl!==null && d.ldl>=55 && (d.nonhdl===null||d.nonhdl>=85)) aha.push(I('a_lip_tg','do'));
+  if(d.tg!==null && d.tg>=150 && d.tg<=499 && d.ldl!==null && d.ldl<100 && d.age!==null && d.age>=50) aha.push(I('a_lip_ipe','opt'));
+  tgt.aha = 'LDL-C <'+ag+' mg/dL ('+(ag===55?'1,4':'1,8')+' mmol/L), non-HDL-C <'+d.ahaNonHdlGoal+' mg/dL';
+  var st=null;
+  if(d.ldl!==null){
+    var red50 = d.ldl0? (1-d.ldl/d.ldl0) : null;
+    st={escOK: d.ldl<escGoal && (red50===null||red50>=0.5), ahaOK: d.ldl<ag && (d.nonhdl===null||d.nonhdl<d.ahaNonHdlGoal), red50:red50};
+  }
+  return {esc:esc, aha:aha, tgt:tgt, st:st};
+}
+
+/* ---------- Kidney ---------- */
+function kidney(s,d){
+  var esc=[], aha=[];
+  if(!d.ckd) return {esc:esc, aha:aha, none:true};
+  var onS = d.dmdrug.indexOf('sglt2')>=0;
+  esc.push(I('e_ckd_raas','do'));
+  esc.push(I('e_ckd_noacearb','no'));
+  if(d.egfr!==null && d.egfr>=20){
+    if(d.dm) esc.push(I('e_ckd_sglt2dm', onS?'info':'do'));
+    else if(d.uacr!==null && d.uacr>=200) esc.push(I('e_ckd_sglt2', onS?'info':'do'));
+    else if(d.egfr<=44) esc.push(I('e_ckd_sglt2low','opt'));
+  }
+  if(d.dm && d.egfr!==null && d.egfr>=25 && d.uacr!==null && d.uacr>=30) esc.push(I('e_ckd_finer','do'));
+  if(d.dm && d.egfr!==null && d.uacr!==null && ((d.egfr>=25&&d.egfr<=49&&d.uacr>=100)||(d.egfr>=50&&d.egfr<=74&&d.uacr>=300))) esc.push(I('e_ckd_sema','do'));
+  if(d.htn && d.egfr!==null && d.egfr>20) esc.push(I('e_htn_ckdsglt2', onS?'info':'do'));
+  if(d.uacr!==null && d.uacr>=30) esc.push(I('e_htn_ckdacei','do'));
+  // AHA
+  aha.push(I('a_ccd_raas','do'));
+  aha.push(I('a_ccd_ckd','do'));
+  if(d.egfr!==null && d.egfr>=30 && (d.dm || (d.uacr!==null&&d.uacr>=30))) aha.push(I('a_ckm_raas','do'));
+  if(d.egfr!==null && d.egfr>=20 && (d.dm || (d.uacr!==null&&d.uacr>=200))) aha.push(I('a_ckm_sglt2', onS?'info':'do'));
+  else if(!d.dm && d.uacr!==null && d.uacr>=30 && d.uacr<200) aha.push(I('a_ckm_sglt2b','opt'));
+  if(d.dm && d.uacr!==null && d.uacr>=30 && d.egfr!==null && d.egfr>=25) aha.push(I('a_ckm_nsmra','opt','Nếu vẫn uACR ≥30 dù ACEi/ARB + SGLT2i'));
+  if(d.dm && d.uacr!==null && d.uacr>=100) aha.push(I('a_ckm_glp1ckd','opt','Nếu vẫn uACR ≥100 dù ACEi/ARB + SGLT2i'));
+  return {esc:esc, aha:aha};
+}
+
+/* ---------- Other ---------- */
+function other(s,d){
+  var esc=[], aha=[];
+  var lv = d.lvef;
+  if(d.acs){
+    esc.push(I('e_acs_bb40', lv!==null&&lv<=40?'do':'info'));
+    esc.push(I('e_acs_bbroutine', lv!==null&&lv<=40?'info':'opt'));
+    esc.push(I('e_acs_acei', (lv!==null&&lv<=40)||d.hf||d.dm||d.htn||d.ckd?'do':'info'));
+    esc.push(I('e_acs_aceiall','opt'));
+    esc.push(I('e_acs_mra', lv!==null&&lv<=40&&(d.hf||d.dm)?'do':'info'));
+    if(lv!==null && lv<=40 && d.pi<=3) esc.push(I('e_acs_lvef','do'));
+    esc.push(I('e_acs_rehab','do')); esc.push(I('e_acs_flu','do')); esc.push(I('e_acs_life','do'));
+    if(d.smoker) esc.push(I('e_acs_smoke','do'));
+    esc.push(I('e_acs_polypill','opt'));
+  } else {
+    esc.push(I('e_ccs_acei', d.htn||d.dm||d.hf?'do':'info'));
+    esc.push(I('e_ccs_aceivhr','opt'));
+  }
+  if(lv!==null && lv<50 && !d.hf) esc.push(I('e_hf_bbB','do','LVEF '+lv+'%'));
+  if(lv!==null && lv<=40 && !d.hf) esc.push(I('e_hf_aceiB','do'));
+  if(d.mi && lv!==null && lv<=40 && (d.hf||d.dm)) esc.push(I('e_hf_eple','do'));
+  if(d.hf){ esc.push(I('e_hf_sglt2','do')); esc.push(I('e_hf_mra','do')); if(lv!==null&&lv<=40){ esc.push(I('e_hf_bb','do')); esc.push(I('e_hf_arni','do')); } }
+  // colchicine
+  var colchCI = (d.crcl!==null && d.crcl<15) || (d.egfr!==null && d.egfr<15);
+  if(d.acs && d.pi<=4) esc.push(I('e_acs_colch', colchCI?'no':'opt', colchCI?'CrCl/eGFR <15':''));
+  else esc.push(I('e_ccs_colch', colchCI?'no':'opt', colchCI?'CrCl/eGFR <15':''));
+  // AHA
+  if(d.acs){
+    aha.push(I('a_acs_bb','info','Khuyến cáo khởi trị sớm trong viện'));
+    aha.push(I('a_acs_acei', (lv!==null&&lv<=40)||d.htn||d.dm||s.setting==='stemi'?'do':'info'));
+    if(!((lv!==null&&lv<=40)||d.htn||d.dm)) aha.push(I('a_acs_aceilow','opt'));
+    aha.push(I('a_acs_mra', lv!==null&&lv<=40&&(d.hf||d.dm)?'do':'info'));
+    aha.push(I('a_acs_colch', colchCI?'no':'opt'));
+    aha.push(I('a_acs_rehab','do')); aha.push(I('a_acs_flu','do'));
+  } else {
+    aha.push(I('a_ccd_raas', d.htn||d.dm||d.ckd||(lv!==null&&lv<=40)?'do':'info'));
+    if(!(d.htn||d.dm||d.ckd) && (lv===null||lv>40)) aha.push(I('a_ccd_raasno','opt'));
+    aha.push(I('a_ccd_colch', colchCI?'no':'opt'));
+    aha.push(I('a_ccd_rehab','do')); aha.push(I('a_ccd_flu','do'));
+  }
+  if(lv!==null && lv<=40) aha.push(I('a_ccd_bb40','do'));
+  if(lv!==null && lv<50) aha.push(I('a_ccd_bb50','do'));
+  if(d.mi && d.pi>=5 && (lv===null||lv>50) && !s.angina && !d.htn) aha.push(I('a_ccd_bbreassess','opt'));
+  if(!d.mi && lv!==null && lv>50) aha.push(I('a_ccd_bbno','info'));
+  if(d.hf){ aha.push(I(lv!==null&&lv<=40?'a_ccd_sglt2hf':'a_ccd_sglt2hfp','do')); }
+  if(d.smoker) aha.push(I('a_ccd_smoke','do'));
+  return {esc:esc, aha:aha};
+}
+
+function evaluate(s){
+  var d = derive(s);
+  return { d:d, at:antithrombotic(s,d), bl:bleeding(s,d), bp:bp(s,d), dm:diabetes(s,d), lip:lipids(s,d), kid:kidney(s,d), oth:other(s,d) };
+}
+if(typeof module!=='undefined') module.exports={evaluate:evaluate, R:R, GL:GL, derive:derive, PHASES:PHASES, phaseFromMonths:phaseFromMonths};
+
+/* ---------- Medication guidance & next steps ---------- */
+var TBL = {
+  doac:'Bảng 11 – ESC 2024 Rung nhĩ (liều DOAC)',
+  statin:'Bảng 6 – ACC/AHA 2026 Rối loạn lipid (cường độ statin)',
+  ext:'Bảng 8 – ESC 2024 HCVM mạn (thuốc chống huyết khối thứ hai kéo dài)',
+  sglt:'Chú thích bảng 20 – ESC 2024 HCVM mạn (thuốc SGLT2i/GLP-1 RA có lợi ích tim mạch)'
+};
+function fmtDate(t){ var x=new Date(t); return ('0'+x.getDate()).slice(-2)+'/'+('0'+(x.getMonth()+1)).slice(-2)+'/'+x.getFullYear(); }
+function atDate(s, months){
+  if(!s.pciDate) return '';
+  var t=Date.parse(s.pciDate); if(isNaN(t)) return '';
+  return ' (≈ '+fmtDate(t + months*30.44*24*3600*1000)+')';
+}
+function doacDoseText(s,d){
+  var o=d.oac;
+  if(o==='apix'){ var n=0; if(d.age!==null&&d.age>=80)n++; if(d.wt!==null&&d.wt<=60)n++; if(d.scr!==null&&d.scr*88.4>=133)n++;
+    return n>=2?'Apixaban 2,5 mg × 2 lần/ngày (đủ ≥2/3 tiêu chí: ≥80 tuổi, ≤60 kg, creatinine ≥133 µmol/L)':'Apixaban 5 mg × 2 lần/ngày (chưa đủ 2/3 tiêu chí giảm liều)'; }
+  if(o==='riva'){ var low = d.crcl!==null && d.crcl>=15 && d.crcl<50;
+    return low?'Rivaroxaban 15 mg/ngày (CrCl '+d.crcl+' mL/ph, trong khoảng 15–49)':'Rivaroxaban 20 mg/ngày'+(d.crcl===null?' (cần CrCl để kiểm tra tiêu chí 15 mg)':''); }
+  if(o==='dabi'){ var must=(d.age!==null&&d.age>=80)||(s.otherdrug||[]).indexOf('verap')>=0;
+    var cons=(d.age!==null&&d.age>=75&&d.age<80)||(d.crcl!==null&&d.crcl>=30&&d.crcl<=50)||d.hbr;
+    return must?'Dabigatran 110 mg × 2 lần/ngày (≥80 tuổi hoặc dùng verapamil)':(cons?'Dabigatran 150 mg × 2 lần/ngày; cân nhắc 110 mg × 2 theo từng BN (75–80 tuổi, CrCl 30–50 hoặc tăng nguy cơ chảy máu)':'Dabigatran 150 mg × 2 lần/ngày'); }
+  if(o==='edox'){ var r=(d.crcl!==null&&d.crcl>=15&&d.crcl<=50)||(d.wt!==null&&d.wt<=60);
+    return r?'Edoxaban 30 mg/ngày (CrCl 15–50 hoặc ≤60 kg)':'Edoxaban 60 mg/ngày (kiểm tra thêm: ciclosporin, dronedarone, erythromycin, ketoconazole → 30 mg)'; }
+  if(o==='vka') return 'VKA: khi phối hợp kháng tiểu cầu, INR đích 2,0–2,5 và TTR >70%';
+  return null;
+}
+function G(txt, refs, tbl){ return {t:txt, refs:refs||[], tbl:tbl||null}; }
+
+function guidance(s,d,res){
+  var out=[], p=d.pi, acs=d.acs;
+  var now=[], next=[];
+  var noPras = d.hx.indexOf('stroke')>=0||d.hx.indexOf('tia')>=0||d.hx.indexOf('ichx')>=0;
+  var praDose = ((d.age!==null&&d.age>=75)||(d.wt!==null&&d.wt<60))?'5 mg/ngày (≥75 tuổi hoặc <60 kg)':'10 mg/ngày';
+  var p2y12Potent = noPras ? 'ticagrelor 90 mg × 2 lần/ngày (không dùng prasugrel vì tiền sử đột quỵ/TIA/XHN)' : 'prasugrel '+praDose+' hoặc ticagrelor 90 mg × 2 lần/ngày';
+  if(d.oacInd!=='none'){
+    var oacTxt = d.oacInd==='mech' ? 'VKA (van cơ học – không dùng DOAC)' : (doacDoseText(s,d) || 'DOAC liều chuẩn phòng đột quỵ (ưu tiên hơn VKA) – chưa chọn thuốc');
+    now.push(G('Kháng đông: '+oacTxt+'.', d.oacInd==='mech'?['e_af_doacvalve']:['e_ccs_doac','e_af_doacpref'], d.oac!=='vka'&&d.oac!=='none'?TBL.doac:null));
+    if(d.oac==='riva' && d.hbr && p<=4) now.push(G('Trong thời gian phối hợp kháng tiểu cầu, nếu lo ngại chảy máu trội hơn nguy cơ huyết khối stent/đột quỵ: có thể cân nhắc rivaroxaban 15 mg/ngày.', [acs?'e_acs_riva15':'e_ccs_riva15','e_af_riva15']));
+    if(d.oac==='dabi' && d.hbr && p<=4) now.push(G('Trong thời gian phối hợp kháng tiểu cầu, nếu lo ngại chảy máu trội hơn nguy cơ huyết khối stent/đột quỵ: có thể cân nhắc dabigatran 110 mg × 2.', [acs?'e_acs_dabi110':'e_ccs_dabi110','e_af_dabi110']));
+    var endM = acs?12:(d.ischHigh?12:6);
+    if(p===0){
+      now.push(G('Phác đồ bộ ba: aspirin 75–100 mg + clopidogrel 75 mg + kháng đông. ESC: ngừng aspirin trong ≤1 tuần (kéo dài tới 1 tháng nếu nguy cơ thiếu máu/huyết khối stent cao); ACC/AHA: 1–4 tuần.', acs?['e_acs_oac','a_acs_oac','e_acs_oac1m']:['e_ccs_oacreg','a_ccd_oac','e_ccs_oacasp1m']));
+      next.push(G('Sau 1 tuần'+atDate(s,0.25)+' (tối đa 1 tháng'+atDate(s,1)+' nếu nguy cơ thiếu máu cao): ngừng aspirin, tiếp tục kháng đông + clopidogrel 75 mg.', acs?['e_acs_oac','a_acs_oac']:['e_ccs_oacreg','a_ccd_oac']));
+    } else if(p===1){
+      now.push(G('Đã quá 1 tuần: ngừng aspirin, dùng kháng đông + clopidogrel 75 mg; chỉ giữ aspirin tới 1 tháng nếu nguy cơ thiếu máu/huyết khối stent vượt trội nguy cơ chảy máu.', acs?['e_acs_oac','e_acs_oac1m','a_acs_oac']:['e_ccs_oacreg','e_ccs_oacasp1m','a_ccd_oacasp']));
+    } else if((p<=4 && acs) || (!acs && p<=3) || (!acs && p===4 && d.ischHigh)){
+      now.push(G('Kháng đông + clopidogrel 75 mg/ngày (không aspirin, không ticagrelor/prasugrel).', acs?['e_acs_oac','a_acs_oac','e_acs_notp']:['e_ccs_oacreg','a_ccd_oac','e_ccs_notp']));
+    } else {
+      now.push(G('Kháng đông đơn độc, ngừng mọi thuốc kháng tiểu cầu.', acs?['e_acs_oac12','e_ccs_oaclife','a_ccd_oac1y']:['e_ccs_oacreg','e_ccs_oaclife','a_ccd_doacmono']));
+    }
+    if(acs && p<=4){
+      if(p>=2) next.push(G('Có thể ngừng clopidogrel ở tháng thứ 6'+atDate(s,6)+' và giữ kháng đông đơn độc (ESC, cá thể hoá theo nguy cơ chảy máu).', ['e_acs_oac6']));
+      next.push(G('Ở tháng thứ 12'+atDate(s,12)+': ngừng clopidogrel, chuyển kháng đông đơn độc suốt đời.', ['e_acs_oac12','e_af_no12','e_ccs_oaclife','a_ccd_oac1y']));
+    }
+    if(!acs && p<=3){
+      next.push(G('ESC: ở tháng thứ '+endM+atDate(s,endM)+' ('+(d.ischHigh?'nguy cơ thiếu máu cao':'không nguy cơ thiếu máu cao')+') ngừng clopidogrel, chuyển kháng đông đơn độc suốt đời. ACC/AHA: clopidogrel tới 6 tháng'+atDate(s,6)+', sau đó có thể DOAC đơn độc.', ['e_ccs_oacreg','e_ccs_oaclife','a_ccd_oac','a_ccd_doacmono']));
+    }
+    if(!acs && p===4 && d.ischHigh) next.push(G('Ở tháng thứ 12'+atDate(s,12)+': ngừng clopidogrel, kháng đông đơn độc suốt đời.', ['e_ccs_oacreg','e_ccs_oaclife']));
+  } else if(acs){
+    if(d.hbr){
+      if(p<=1){
+        now.push(G('DAPT: aspirin 75–100 mg + thuốc ức chế P2Y12 ('+(d.age!==null&&d.age>=70?'có thể chọn clopidogrel 75 mg ở BN cao tuổi có HBR, hoặc ':'')+p2y12Potent+').', ['e_acs_dapt','a_acs_dapt','e_acs_clopiold']));
+        next.push(G('Sau 1 tháng'+atDate(s,1)+' (BN có HBR): chuyển đơn trị kháng tiểu cầu – aspirin 75–100 mg hoặc thuốc ức chế P2Y12.', ['e_acs_hbr1m','a_acs_hbr']));
+      } else {
+        now.push(G('BN có HBR, đã quá 1 tháng: đơn trị kháng tiểu cầu – aspirin 75–100 mg hoặc thuốc ức chế P2Y12 (vd. clopidogrel 75 mg).', ['e_acs_hbr1m','a_acs_hbr']));
+        next.push(G('Duy trì đơn trị kháng tiểu cầu lâu dài (aspirin 75–100 mg suốt đời, hoặc clopidogrel 75 mg thay thế).', ['e_ccs_asplife','e_ccs_clopialt','a_ccd_asp']));
+      }
+    } else if(p<=1){
+      now.push(G('DAPT: aspirin 75–100 mg + '+p2y12Potent+'; clopidogrel 75 mg chỉ khi không dùng được thuốc mạnh. Không xuống thang trong 30 ngày đầu.', ['e_acs_dapt','a_acs_dapt','e_acs_tica','e_acs_pras', s.setting==='stemi'?'a_acs_stemipt':'a_acs_nstept','e_acs_no30']));
+      next.push(G('Từ ≥1 tháng'+atDate(s,1)+': nếu đang dùng ticagrelor và dung nạp tốt, có thể chuyển ticagrelor 90 mg × 2 đơn trị (ACC/AHA); hoặc xuống thang sang clopidogrel 75 mg để giảm chảy máu.', ['a_acs_ticamono','a_acs_deesc','e_acs_deesc']));
+      if(d.ischHigh) next.push(G('Nguy cơ thiếu máu cao: duy trì DAPT đủ 12 tháng'+atDate(s,12)+'.', ['e_acs_dapt','a_acs_dapt']));
+      else next.push(G('Từ 3–6 tháng'+atDate(s,3)+': nếu không biến cố và không nguy cơ thiếu máu cao, có thể chuyển đơn trị kháng tiểu cầu (ưu tiên thuốc ức chế P2Y12).', ['e_acs_sapt36']));
+    } else if(p===2){
+      now.push(G('Tiếp tục DAPT aspirin 75–100 mg + thuốc ức chế P2Y12. Lựa chọn rút ngắn/thay thế: ticagrelor đơn trị (nếu đang dùng ticagrelor) hoặc xuống thang sang clopidogrel 75 mg.', ['e_acs_dapt','a_acs_dapt','a_acs_ticamono','a_acs_deesc','e_acs_deesc']));
+      if(d.ischHigh) next.push(G('Nguy cơ thiếu máu cao: duy trì DAPT đủ 12 tháng'+atDate(s,12)+'.', ['e_acs_dapt','a_acs_dapt']));
+      else next.push(G('Từ 3–6 tháng'+atDate(s,3)+': nếu không biến cố và không nguy cơ thiếu máu cao, có thể chuyển đơn trị kháng tiểu cầu (ưu tiên P2Y12); nếu không, DAPT đủ 12 tháng'+atDate(s,12)+'.', ['e_acs_sapt36','e_acs_dapt']));
+    } else if(p<=4){
+      now.push(G(d.ischHigh?'Nguy cơ thiếu máu cao: tiếp tục DAPT đủ 12 tháng.':'Tiếp tục DAPT đến 12 tháng, hoặc chuyển đơn trị kháng tiểu cầu (ưu tiên thuốc ức chế P2Y12) nếu không biến cố và không nguy cơ thiếu máu cao.', d.ischHigh?['e_acs_dapt','a_acs_dapt']:['e_acs_dapt','e_acs_sapt36','a_acs_dapt']));
+      next.push(G('Ở tháng thứ 12'+atDate(s,12)+': chuyển đơn trị kháng tiểu cầu lâu dài (aspirin 75–100 mg, hoặc clopidogrel 75 mg / thuốc ức chế P2Y12 đơn trị). Đánh giá chỉ định kéo dài thuốc thứ hai nếu nguy cơ thiếu máu cao/trung bình và không HBR.', ['e_ccs_asplife','e_ccs_clopialt','e_acs_p2y12mono','e_acs_exthigh','e_acs_extmod']));
+    } else {
+      now.push(G('Đơn trị kháng tiểu cầu lâu dài: aspirin 75–100 mg/ngày suốt đời, hoặc clopidogrel 75 mg/ngày.', ['e_ccs_asplife','e_ccs_clopialt','e_acs_p2y12mono','a_ccd_asp']));
+    }
+    if(!d.hbr && p>=4 && d.isch!=='low'){
+      next.push(G('Nếu kéo dài thuốc thứ hai cùng aspirin (nguy cơ thiếu máu '+(d.ischHigh?'cao':'trung bình')+', không HBR): rivaroxaban 2,5 mg × 2, clopidogrel 75 mg, prasugrel 10 mg (5 mg nếu <60 kg hoặc ≥75 tuổi) hoặc ticagrelor 60 mg × 2. ACC/AHA: DAPT tới 3 năm nếu có NMCT và nguy cơ chảy máu thấp; rivaroxaban 2,5 mg × 2 + aspirin.', [d.ischHigh?'e_acs_exthigh':'e_acs_extmod','e_ccs_ext', d.mi?'a_ccd_extdapt':'a_ccd_riva','a_ccd_riva'], TBL.ext));
+    }
+    if(d.ckd && p<=4 && !d.hbr) next.push(G('Có CKD: nên cân nhắc rút ngắn DAPT (3 tháng) hoặc xuống thang sang clopidogrel sau 1–3 tháng.', ['e_ckd_acsdapt']));
+  } else {
+    var shortHBR = d.hbr && !d.ischHigh;
+    if(p<=3 && !(shortHBR && p>=2)){
+      var potentTxt = d.highThrombStent?' Đặt stent nguy cơ huyết khối cao: có thể dùng prasugrel hoặc ticagrelor thay clopidogrel trong tháng đầu, tới 3–6 tháng.':'';
+      now.push(G('DAPT: aspirin 75–100 mg + clopidogrel 75 mg/ngày.'+potentTxt, ['e_ccs_dapt6','a_ccd_dapt6'].concat(d.highThrombStent?['e_ccs_potent']:[])));
+      if(shortHBR) next.push(G('BN có HBR: ngừng DAPT sau 1–3 tháng'+atDate(s,1)+(s.pciDate?' – '+atDate(s,3).trim():'')+', tiếp tục đơn trị kháng tiểu cầu.', ['e_ccs_hbr13','a_ccd_p2y12mono']));
+      else { var canShort=!d.hbr && !d.ischHigh;
+        next.push(G('ESC/ACC-AHA: ngừng clopidogrel sau 6 tháng'+atDate(s,6)+', duy trì aspirin 75–100 mg suốt đời. '+(canShort?'Có thể rút ngắn còn 1–3 tháng (ESC) hoặc chuyển P2Y12 đơn trị sau 1–3 tháng (ACC/AHA, DES).':'ACC/AHA: BN chọn lọc đặt DES có thể chuyển P2Y12 đơn trị sau 1–3 tháng.'), ['e_ccs_dapt6','a_ccd_dapt6'].concat(canShort?['e_ccs_short']:[]).concat(['a_ccd_p2y12mono']))); }
+    } else {
+      now.push(G('Đơn trị kháng tiểu cầu lâu dài: aspirin 75–100 mg/ngày suốt đời, hoặc clopidogrel 75 mg/ngày.', ['e_ccs_asplife','e_ccs_clopialt','a_ccd_asp'].concat(d.ckd?['e_ckd_sapt']:[])));
+      if(d.ckd && d.egfr!==null && d.egfr>30) now.push(G('Có CKD (eGFR >30): nên ưu tiên clopidogrel hơn aspirin.', ['e_ckd_clopi']));
+      if(!d.hbr && d.isch!=='low') next.push(G('Nếu kéo dài thuốc thứ hai cùng aspirin (nguy cơ thiếu máu tăng, không HBR): rivaroxaban 2,5 mg × 2, clopidogrel 75 mg, prasugrel hoặc ticagrelor 60 mg × 2.', ['e_ccs_ext', d.ischHigh?'a_ccd_riva':'e_ccs_ext'], TBL.ext));
+    }
+  }
+  if(d.giRisk) now.push(G('Nguy cơ xuất huyết tiêu hoá cao: dùng PPI suốt thời gian phối hợp thuốc chống huyết khối.', ['e_ccs_ppi','a_acs_ppi']));
+  if((s.otherdrug||[]).indexOf('nsaid')>=0) now.push(G('Ngừng NSAID dùng kéo dài.', ['a_ccd_nsaid']));
+  out.push({t:'Chống huyết khối – nên dùng hiện tại', k:'now', items:now});
+  if(next.length) out.push({t:'Chống huyết khối – bước tiếp theo', k:'next', items:next});
+
+  // BP
+  var bpI=[], st=res.bp.st;
+  if(d.htn || (d.sbp!==null && d.sbp>=130)){
+    if(st && (!st.escOK || !st.ahaOK)){
+      bpI.push(G('HA '+d.sbp+'/'+(d.dbp===null?'–':d.dbp)+' mmHg chưa đạt đích (ESC '+res.bp.tgt.esc+'; ACC/AHA '+res.bp.tgt.aha+'): tăng cường điều trị.', ['e_htn_target','a_htn_goal','a_ccd_bpgoal']));
+      bpI.push(G('Phối hợp ức chế RAS (ACEi hoặc ARB) + chẹn kênh canxi DHP hoặc lợi tiểu thiazide/giống thiazide'+(d.mi?'; sau NMCT dùng chẹn beta + ức chế RAS':'')+(s.angina?'; còn đau thắt ngực: chẹn beta và/hoặc chẹn kênh canxi':'')+'. Thêm MRA khi cần (ACC/AHA).', ['e_htn_combo','e_htn_first','a_ccd_bpdrug'].concat(d.mi?['e_htn_mi']:[]).concat(s.angina?['e_htn_angina']:[])));
+      bpI.push(G('Kiểm tra hạ HA tư thế trước khi tăng liều.', ['e_htn_ohtest']));
+    } else if(st){
+      bpI.push(G('HA đạt đích: duy trì thuốc hạ áp lâu dài nếu dung nạp tốt.', ['e_htn_life']));
+      if(st.escLow) bpI.push(G('HATT <120 mmHg: ESC đặt đích 120–129 mmHg nếu dung nạp; ACC/AHA khuyến khích <120 mmHg. Đánh giá triệu chứng/hạ HA tư thế.', ['e_htn_target','a_htn_goal','e_htn_ohtest']));
+    } else bpI.push(G('Nhập HA hiện tại để đánh giá đích (ESC '+res.bp.tgt.esc+'; ACC/AHA '+res.bp.tgt.aha+').', ['e_htn_target','a_htn_goal']));
+  }
+  if(bpI.length) out.push({t:'Huyết áp', k:'bp', items:bpI});
+
+  // Lipids
+  var lp=[], hasE=d.addon.indexOf('eze')>=0, hasP=d.addon.indexOf('pcsk9')>=0||d.addon.indexOf('incl')>=0;
+  var aG=d.ahaLdlGoal;
+  if(d.statinIntol){
+    lp.push(G('Không dung nạp statin: dùng thuốc không phải statin có lợi ích tim mạch (ezetimibe, PCSK9 mAb, acid bempedoic) đơn độc hoặc phối hợp.', ['e_lip_nonstatin','e_lip_bempe_intol', d.acs?'a_acs_lipintol':'a_lip_vhradd']));
+  } else if(d.statin!=='high'){
+    lp.push(G('Chuyển/tăng statin cường độ cao tới liều tối đa dung nạp: atorvastatin 40–80 mg hoặc rosuvastatin 20–40 mg.', ['e_lip_statin', d.acs&&p<=4?'a_acs_statin':(d.vhr?'a_lip_vhr':'a_lip_nvhr')], TBL.statin));
+  }
+  if(d.ldl!==null){
+    if(d.ldl>=55 && d.statin==='high' && !hasE) lp.push(G('LDL-C '+d.ldl+' mg/dL ≥55 dù statin tối đa: thêm ezetimibe 10 mg/ngày'+(d.vhr||d.ldl>=70?' (ACC/AHA: ezetimibe và/hoặc PCSK9 mAb)':'')+'.', ['e_lip_eze', d.acs&&p<=4?(d.ldl>=70?'a_acs_lip70':'a_acs_lip55'):(d.vhr?'a_lip_vhradd':'a_lip_nvhradd')]));
+    else if(d.ldl>=55 && d.statin==='high' && hasE && !hasP) lp.push(G('LDL-C '+d.ldl+' mg/dL ≥55 dù statin tối đa + ezetimibe: thêm thuốc ức chế PCSK9 (hoặc acid bempedoic/inclisiran theo ACC/AHA).', ['e_lip_pcsk9', d.vhr?'a_lip_vhradd':'a_lip_nvhradd', d.vhr?'a_lip_vhrincl':'a_lip_nvhradd']));
+    else if(d.ldl<55) lp.push(G('LDL-C '+d.ldl+' mg/dL đã <55 mg/dL: duy trì phác đồ hiện tại'+(d.recurrent?'; có biến cố tái phát ≤2 năm – có thể nhắm <40 mg/dL':'')+'.', ['e_lip_goal'].concat(d.recurrent?['e_lip_40']:[])));
+    else if(d.statin==='high' && hasE && hasP) lp.push(G('Chưa đạt đích dù statin + ezetimibe + PCSK9: cân nhắc thêm acid bempedoic.', ['e_lip_bempe_add', d.vhr?'a_lip_vhrbempe':'a_lip_nvhradd']));
+  } else lp.push(G('Chưa có LDL-C: làm bộ lipid để đánh giá đích (ESC <55 mg/dL; ACC/AHA <'+aG+' mg/dL).', ['e_lip_goal', d.vhr?'a_lip_vhr':'a_lip_nvhr']));
+  if(d.lpaRaw===null) lp.push(G('Đo Lp(a) ít nhất một lần.', ['a_lip_lpa']));
+  if(d.tg!==null && d.tg>=135 && d.tg<=499 && d.statin==='high') lp.push(G('TG '+d.tg+' mg/dL khi đang dùng statin: có thể cân nhắc icosapent ethyl 2 g × 2/ngày.', ['e_lip_ipe'].concat(d.tg>=150&&d.age!==null&&d.age>=50&&d.ldl!==null&&d.ldl<100?['a_lip_ipe']:[])));
+  if(d.ckd && !d.dialysis && d.egfr!==null && d.egfr>=20 && d.ldl!==null && d.ldl>=70 && d.statin==='high' && !hasP) lp.push(G('CKD với LDL-C ≥70 mg/dL dù statin ± ezetimibe: nên cân nhắc thêm thuốc ức chế PCSK9.', ['e_ckd_pcsk9']));
+  out.push({t:'Lipid máu', k:'lip', items:lp});
+
+  // DM & metabolic
+  var dm=[];
+  if(d.dm){
+    var onS=d.dmdrug.indexOf('sglt2')>=0, onG=d.dmdrug.indexOf('glp1')>=0;
+    if(!onS && !onG) dm.push(G('Thêm ức chế SGLT2 (canagliflozin, dapagliflozin, empagliflozin, sotagliflozin) hoặc GLP-1 RA (dulaglutide, efpeglenatide, liraglutide, semaglutide) có lợi ích tim mạch, độc lập với HbA1c.', ['e_ccs_sglt2','e_ccs_glp1','a_ccd_sglt2glp1','a_ckm_sglt2glp1'], TBL.sglt));
+    else if(!(onS&&onG)) dm.push(G('Đang dùng '+(onS?'SGLT2i':'GLP-1 RA')+': ESC khuyến cáo cả hai nhóm (I-A); ACC/AHA: phối hợp SGLT2i + GLP-1 có thể có lợi.', [onS?'e_ccs_glp1':'e_ccs_sglt2','a_ckm_combo']));
+    if(d.a1c!==null && d.a1c>=7) dm.push(G('HbA1c '+d.a1c+'% chưa đạt: tăng cường điều trị để đạt '+res.dm.tgt.esc+'.', d.ckd?['e_dm23_a1c','e_ckd_a1c']:['e_dm23_a1c']));
+    if(d.ckd && d.egfr!==null && d.egfr>=30 && d.dmdrug.indexOf('metf')<0) dm.push(G('CKD với eGFR ≥30: có thể thêm metformin để hạ đường huyết.', ['e_ckd_metf']));
+    if(d.hf) dm.push(G('Có suy tim: ưu tiên ức chế SGLT2.', ['a_ckm_hfsglt2','e_hf_sglt2']));
+  } else if(d.bmi!==null && d.bmi>27){
+    dm.push(G('BMI '+d.bmi+' kg/m², không ĐTĐ: cân nhắc semaglutide/liệu pháp nền GLP-1 kèm can thiệp lối sống để giảm biến cố tim mạch; tránh naltrexone/bupropion và thuốc chứa phentermine.', ['e_ccs_sema','a_ckm_obes','a_ckm_obeslife','a_ckm_harm']));
+  }
+  if(dm.length) out.push({t:'Đái tháo đường & chuyển hoá', k:'dm', items:dm});
+
+  // Kidney
+  var kd=[];
+  if(d.ckd){
+    kd.push(G('ACEi hoặc ARB liều tối đa dung nạp; không phối hợp ACEi với ARB.', ['e_ckd_raas','e_ckd_noacearb','a_ccd_raas']));
+    if(d.egfr!==null && d.egfr>=20 && (d.dm || (d.uacr!==null&&d.uacr>=200)) && d.dmdrug.indexOf('sglt2')<0) kd.push(G('Thêm ức chế SGLT2 (eGFR '+d.egfr+').', [d.dm?'e_ckd_sglt2dm':'e_ckd_sglt2','a_ckm_sglt2']));
+    if(d.dm && d.egfr!==null && d.egfr>=25 && d.uacr!==null && d.uacr>=30) kd.push(G('ĐTĐ + uACR ≥30 mg/g, eGFR ≥25: thêm finerenone.', ['e_ckd_finer','a_ckm_nsmra']));
+  }
+  if(kd.length) out.push({t:'Bệnh thận mạn', k:'kid', items:kd});
+
+  // Other
+  var ot=[], lv=d.lvef;
+  if(lv!==null && lv<=40){
+    ot.push(G('LVEF '+lv+'%: chẹn beta (metoprolol succinate, carvedilol hoặc bisoprolol, tăng tới liều đích) + ACEi/ARB (ARNI nếu suy tim có triệu chứng)'+((d.hf||d.dm)?' + MRA (eplerenone)':'')+(d.hf?' + ức chế SGLT2':'')+'.', [d.acs?'e_acs_bb40':'e_hf_bbB','a_ccd_bb40','a_ccd_bb50', d.hf?'e_hf_arni':'e_hf_aceiB'].concat((d.hf||d.dm)?[d.acs?'e_acs_mra':'e_hf_eple', d.acs?'a_acs_mra':'e_hf_mra']:[]).concat(d.hf?['e_hf_sglt2','a_ccd_sglt2hf']:[])));
+  } else if(lv!==null && lv<50){
+    ot.push(G('LVEF '+lv+'%: chẹn beta (metoprolol succinate, carvedilol hoặc bisoprolol).', ['e_hf_bbB','a_ccd_bb50']));
+  }
+  if(d.acs && !(lv!==null&&lv<=40)){
+    ot.push(G('Chẹn beta: ESC nên cân nhắc thường quy sau HCVC (IIa); ACC/AHA khởi trị sớm cho mọi HCVC không chống chỉ định.', ['e_acs_bbroutine','a_acs_bb']));
+    ot.push(G((d.htn||d.dm||d.ckd)?'ACEi (ARB nếu không dung nạp) do có THA/ĐTĐ/CKD.':'ACEi/ARB: nên cân nhắc thường quy.', (d.htn||d.dm||d.ckd)?['e_acs_acei','a_acs_acei']:['e_acs_aceiall','a_acs_aceilow']));
+  } else if(!d.acs && !(lv!==null&&lv<=40) && (d.htn||d.dm||d.hf)) ot.push(G('ACEi (ARB nếu không dung nạp) do có THA/ĐTĐ/suy tim.', ['e_ccs_acei','a_ccd_raas']));
+  if(d.mi && p>=5 && (lv===null||lv>50) && !s.angina && !d.htn) ot.push(G('Đã >1 năm sau NMCT, LVEF >50%, không đau ngực/loạn nhịp/THA: có thể đánh giá lại chỉ định chẹn beta lâu dài.', ['a_ccd_bbreassess']));
+  var colchCI = (d.crcl!==null && d.crcl<15) || (d.egfr!==null && d.egfr<15);
+  if(!colchCI) ot.push(G('Có thể thêm colchicine 0,5 mg/ngày để giảm biến cố xơ vữa tái phát.', [d.acs&&p<=4?'e_acs_colch':'e_ccs_colch', d.acs?'a_acs_colch':'a_ccd_colch']));
+  if(d.smoker) ot.push(G('Bỏ thuốc lá: tư vấn ở mọi lần khám, hỗ trợ bằng liệu pháp thay thế nicotine, varenicline hoặc bupropion.', ['e_acs_smoke','a_ccd_smoke']));
+  ot.push(G('Tiêm vaccine cúm hằng năm; tham gia chương trình phục hồi chức năng tim.', d.acs?['e_acs_flu','a_acs_flu','e_acs_rehab','a_acs_rehab']:['a_ccd_flu','a_ccd_rehab']));
+  out.push({t:'Điều trị dự phòng thứ phát khác', k:'oth', items:ot});
+
+  // Follow-up
+  var fu=[];
+  fu.push(G('Xét nghiệm bộ lipid 4–8 tuần (ACC/AHA HCVC) / 4–12 tuần (ACC/AHA lipid) sau khi bắt đầu hoặc chỉnh thuốc hạ lipid, sau đó mỗi 6–12 tháng. ESC: đánh giá đáp ứng sau 4–6 tuần để quyết định thêm thuốc.', ['a_acs_lippanel','a_lip_mon','e_lip_eze']));
+  if(d.acs && lv!==null && lv<=40 && p<=3) fu.push(G('Siêu âm tim đánh giá lại LVEF 6–12 tuần sau HCVC'+atDate(s,2)+' để xét chỉ định ICD dự phòng tiên phát.', ['e_acs_lvef']));
+  if(d.oacInd!=='none') fu.push(G('Đánh giá và xử trí các yếu tố nguy cơ chảy máu có thể thay đổi được ở mỗi lần khám; không dùng điểm nguy cơ chảy máu để quyết định ngừng kháng đông.', ['e_af_bleedmod','e_af_noscore']));
+  if(d.smoker) fu.push(G('Đánh giá tình trạng hút thuốc ở mọi lần khám.', ['a_ccd_smoke']));
+  out.push({t:'Theo dõi', k:'fu', items:fu});
+  return out;
+}
+var _evaluate = evaluate;
+evaluate = function(s){ var r=_evaluate(s); r.gd = guidance(s, r.d, r); return r; };
+if(typeof module!=='undefined') module.exports.evaluate = evaluate;
+
+/* ---------- DAPT duration recommendations (grouped; ids from R) ---------- */
+var DAPTDUR = [
+ {k:'acs0', t:'HCVC – thời gian DAPT mặc định', rel:function(d){return d.acs && d.oacInd==='none';},
+  esc:['e_acs_dapt'], aha:['a_acs_dapt']},
+ {k:'acs1', t:'HCVC – rút ngắn DAPT / xuống thang P2Y12', rel:function(d){return d.acs && d.oacInd==='none';},
+  esc:['e_acs_sapt36','e_acs_hbr1m','e_acs_deesc','e_acs_no30'], aha:['a_acs_ticamono','a_acs_hbr','a_acs_deesc']},
+ {k:'ccs', t:'HCVM mạn / bệnh mạch vành mạn – PCI chương trình', rel:function(d){return !d.acs && d.oacInd==='none';},
+  esc:['e_ccs_dapt6','e_ccs_hbr13','e_ccs_short','e_ccs_potent'], aha:['a_ccd_dapt6','a_ccd_p2y12mono']},
+ {k:'ckd', t:'Bệnh thận mạn (ESC 2026 CKD)', rel:function(d){return d.ckd && d.oacInd==='none';},
+  esc:['e_ckd_ccsdapt','e_ckd_acsdapt'], aha:[], ahaNote:'ACC/AHA không có khuyến cáo thời gian DAPT riêng cho CKD trong các hướng dẫn được dùng.'},
+ {k:'ext', t:'Kéo dài điều trị chống huyết khối sau 12 tháng', rel:function(d){return d.oacInd==='none';},
+  esc:['e_acs_exthigh','e_acs_extmod','e_ccs_ext','e_ccs_ticamono'], aha:['a_ccd_extdapt']},
+ {k:'oac', t:'BN có chỉ định kháng đông (OAC) – thời gian aspirin và kháng tiểu cầu', rel:function(d){return d.oacInd!=='none';},
+  esc:['e_acs_oac','e_acs_oac1m','e_af_acs','e_af_acs1m','e_ccs_oacreg','e_ccs_oacasp1m','e_af_pci','e_af_pci1m','e_acs_oac6','e_acs_oac12','e_af_no12'],
+  aha:['a_acs_oac','a_ccd_oac','a_ccd_oacasp','a_ccd_oac1y']}
+];
+/* Điều kiện nguy cơ thiếu máu / chảy máu ghi trong chính khuyến cáo: chỉ hiển thị khi BN khớp */
+function _hi(d){return d.isch==='high';}
+var DAPTCOND = {
+ e_acs_dapt:function(d){return !d.hbr;},            // "trừ khi HBR"
+ a_acs_dapt:function(d){return !d.hbr;},            // "không HBR"
+ e_acs_sapt36:function(d){return !_hi(d);},          // "không nguy cơ thiếu máu cao"
+ e_acs_hbr1m:function(d){return d.hbr;},
+ a_acs_hbr:function(d){return d.hbr;},
+ e_ccs_hbr13:function(d){return d.hbr && !_hi(d);},
+ e_ccs_short:function(d){return !d.hbr && !_hi(d);},
+ e_ccs_potent:function(d){return _hi(d);},           // stent nguy cơ huyết khối cao
+ e_acs_exthigh:function(d){return _hi(d) && !d.hbr;},
+ e_acs_extmod:function(d){return d.isch==='mod' && !d.hbr;},
+ e_ccs_ext:function(d){return d.isch!=='low' && !d.hbr;}, // "nguy cơ thiếu máu tăng"
+ e_ccs_ticamono:function(d){return _hi(d) && !d.hbr;},
+ a_ccd_extdapt:function(d){return !d.hbr && d.mi;},  // "tiền sử NMCT và nguy cơ chảy máu thấp"
+ e_acs_oac1m:function(d){return _hi(d);},
+ e_af_acs:function(d){return !_hi(d) || d.hbr;},      // "nguy cơ huyết khối thấp hoặc HBR"
+ e_af_acs1m:function(d){return _hi(d) && !d.hbr;},    // thiếu máu vượt trội chảy máu
+ e_ccs_oacasp1m:function(d){return _hi(d);},
+ e_af_pci:function(d){return !_hi(d);},              // "nguy cơ thiếu máu thấp"
+ e_af_pci1m:function(d){return _hi(d) && !d.hbr;},    // huyết khối stent vượt trội chảy máu
+ a_ccd_oacasp:function(d){return _hi(d) && !d.hbr;},  // "nguy cơ huyết khối cao và chảy máu thấp"
+ a_ccd_oac1y:function(d){return !_hi(d);}            // "nguy cơ huyết khối xơ vữa thấp"
+};
+var DAPT_ACS={e_ckd_acsdapt:1,e_acs_exthigh:1,e_acs_extmod:1,e_acs_oac:1,e_acs_oac1m:1,e_af_acs:1,e_af_acs1m:1,e_acs_oac6:1,e_acs_oac12:1,a_acs_oac:1};
+var DAPT_CCS={e_ckd_ccsdapt:1,e_ccs_ext:1,e_ccs_oacreg:1,e_ccs_oacasp1m:1,e_af_pci:1,e_af_pci1m:1,a_ccd_oac:1,a_ccd_oacasp:1,a_ccd_oac1y:1};
+function daptFor(d){
+  return DAPTDUR.filter(function(g){return g.rel(d);}).map(function(g){
+    function f(ids){ return ids.filter(function(id){ if(DAPT_ACS[id] && !d.acs) return false; if(DAPT_CCS[id] && d.acs) return false; var c=DAPTCOND[id]; return !c || c(d); }); }
+    return {k:g.k, t:g.t, esc:f(g.esc), aha:f(g.aha), ahaNote:g.ahaNote};
+  }).filter(function(g){ return g.esc.length || g.aha.length; });
+}
+var _evaluate3 = evaluate;
+evaluate = function(s){
+  var r=_evaluate3(s), gd=r.gd, i, nx=null, ni=-1;
+  for(i=0;i<gd.length;i++){ if(gd[i].k==='next') nx=gd[i]; if(gd[i].k==='now') ni=i; }
+  if(!nx){ nx={t:'Chống huyết khối – bước tiếp theo', k:'next', items:[]}; gd.splice(ni+1,0,nx); }
+  var used={}; nx.items.forEach(function(it){ it.refs.forEach(function(id){ used[id]=1; }); });
+  nx.dapt = daptFor(r.d).map(function(g){ function f(a){ return a.filter(function(id){return !used[id];}); } return {k:g.k,t:g.t,esc:f(g.esc),aha:f(g.aha),ahaNote:g.ahaNote}; })
+    .filter(function(g){ return g.esc.length || g.aha.length; });
+  return r;
+};
+if(typeof module!=='undefined'){ module.exports.evaluate = evaluate; module.exports.DAPTDUR=DAPTDUR; module.exports.daptFor=daptFor; module.exports.R=R; }
+
+</script>
+<script>
+(function(){
+var KEY='pci-mgmt-v1';
+var DEMO={pname:'',pid:'',setting:'nstemi',phase:'p2',stent:'des',feat:['plad'],ischOv:'auto',age:'68',sex:'m',wt:'64',ht:'163',smoke:'former',hx:[],angina:false,ap:['asp','tica'],oacInd:'none',oac:'none',oacDose:'std',otherdrug:[],htn:'yes',sbp:'142',dbp:'86',oh:false,frail:false,lifeShort:false,dm:'t2',a1c:'7.8',dmdrug:['metf'],cr:'115',crU:'umol',uacr:'45',uacrU:'mgg',dialysis:false,lipU:'mmol',ldl:'2.1',ldl0:'3.6',tc:'3.9',hdl:'1.0',tg:'1.9',lpa:'',lpaU:'mg',statin:'high',statinIntol:false,addon:[],hb:'128',plt:'210',bl:[],gi:false,lvef:'45',hfsx:false,pciDate:'',demo:true};
+var EMPTY={pname:'',pid:'',setting:'nstemi',phase:'p0',stent:'des',feat:[],ischOv:'auto',age:'',sex:'m',wt:'',ht:'',smoke:'no',hx:[],angina:false,ap:[],oacInd:'none',oac:'none',oacDose:'std',otherdrug:[],htn:'no',sbp:'',dbp:'',oh:false,frail:false,lifeShort:false,dm:'none',a1c:'',dmdrug:[],cr:'',crU:'umol',uacr:'',uacrU:'mgg',dialysis:false,lipU:'mmol',ldl:'',ldl0:'',tc:'',hdl:'',tg:'',lpa:'',lpaU:'mg',statin:'none',statinIntol:false,addon:[],hb:'',plt:'',bl:[],gi:false,lvef:'',hfsx:false,pciDate:'',demo:false};
+var S; try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(e){ S=null; }
+if(!S) S=JSON.parse(JSON.stringify(DEMO));
+var UI={filter:'both', tab:'tong', hideInfo:false};
+try{ var u=JSON.parse(localStorage.getItem(KEY+'-ui')); if(u){UI.tab=u.tab||'tong';} }catch(e){}
+
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(KEY+'-ui', JSON.stringify(UI)); }catch(e){} }
+function esc(t){ return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+/* ---------- FORM DEFINITION ---------- */
+var F=[
+ {id:'pt', t:'Bệnh nhân', open:true, items:[
+  {type:'texts', f:[{k:'pname',lab:'Họ và tên',w:2},{k:'pid',lab:'Mã bệnh nhân',w:1}]},
+  {type:'nums', f:[{k:'age',lab:'Tuổi'},{k:'wt',lab:'Cân nặng (kg)'},{k:'ht',lab:'Chiều cao (cm)'}]},
+  {k:'sex', type:'one', lab:'Giới', o:[['m','Nam'],['f','Nữ']]},
+  {k:'smoke', type:'one', lab:'Hút thuốc lá', o:[['no','Không'],['cur','Đang hút'],['former','Đã bỏ']]},
+  {k:'hx', type:'multi', lab:'Tiền sử', o:[['priorMI','NMCT trước đây (ngoài lần này)'],['stroke','Đột quỵ thiếu máu'],['tia','TIA'],['ichx','Xuất huyết nội sọ tự phát'],['pad','Bệnh ĐM ngoại biên có triệu chứng'],['hf','Suy tim'],['recur2y','Biến cố xơ vữa tái phát ≤2 năm dù statin tối đa']]},
+  {k:'angina', type:'bool', lab:'Còn đau thắt ngực có triệu chứng'}
+ ]},
+ {id:'ctx', t:'Bối cảnh PCI', open:true, items:[
+  {k:'setting', type:'one', lab:'Chỉ định PCI', o:[['stemi','STEMI'],['nstemi','NSTEMI'],['ua','Đau thắt ngực không ổn định'],['ccs','HCVM mạn – PCI chương trình']]},
+  {k:'pciDate', type:'date', lab:'Ngày PCI (tuỳ chọn – tự chọn giai đoạn)'},
+  {k:'phase', type:'one', lab:'Thời gian từ PCI đến nay', o:PHASES.map(function(p){return [p.id,p.lab];})},
+  {k:'stent', type:'one', lab:'Loại can thiệp', o:[['des','DES thế hệ mới'],['dcb','Bóng phủ thuốc (DCB)'],['bms','Stent kim loại trần']]},
+  {k:'feat', type:'multi', lab:'Đặc điểm giải phẫu/thủ thuật', o:[['lm','Stent thân chung'],['plad','LAD đoạn gần'],['last','ĐM còn lại duy nhất'],['subopt','Stent chưa tối ưu'],['long','Tổng chiều dài stent >60 mm'],['bif2','Chia đôi 2 stent'],['cto','CTO'],['st','Tiền sử huyết khối stent'],['cyp','CYP2C19 *2/*3 đã biết']]},
+  {k:'ischOv', type:'one', lab:'Nguy cơ thiếu máu/huyết khối', o:[['auto','Tự động'],['high','Cao'],['mod','Trung bình'],['low','Thấp']], hint:'ischHint'}
+ ]},
+ {id:'at', t:'Thuốc chống huyết khối', open:true, items:[
+  {k:'ap', type:'multi', lab:'Kháng tiểu cầu đang dùng', o:[['asp','Aspirin'],['clopi','Clopidogrel'],['tica','Ticagrelor'],['pras','Prasugrel']]},
+  {k:'oacInd', type:'one', lab:'Chỉ định kháng đông đường uống', o:[['none','Không'],['af','Rung nhĩ'],['vte','Huyết khối tĩnh mạch'],['mech','Van tim cơ học'],['other','Khác']]},
+  {k:'oac', type:'one', lab:'Kháng đông đang dùng', o:[['none','Không'],['apix','Apixaban'],['riva','Rivaroxaban'],['dabi','Dabigatran'],['edox','Edoxaban'],['vka','VKA']]},
+  {k:'oacDose', type:'one', lab:'Liều DOAC', o:[['std','Liều chuẩn'],['red','Liều giảm']], show:function(){return ['apix','riva','dabi','edox'].indexOf(S.oac)>=0;}, hint:'doseHint'},
+  {k:'otherdrug', type:'multi', lab:'Thuốc khác liên quan', o:[['ppi','PPI'],['nsaid','NSAID/corticoid uống kéo dài'],['verap','Verapamil']]}
+ ]},
+ {id:'bp', t:'Huyết áp', open:false, items:[
+  {k:'htn', type:'one', lab:'Tăng huyết áp', o:[['yes','Có'],['no','Không']]},
+  {type:'nums', f:[{k:'sbp',lab:'HA tâm thu'},{k:'dbp',lab:'HA tâm trương'}]},
+  {k:'oh', type:'bool', lab:'Hạ HA tư thế có triệu chứng'},
+  {k:'frail', type:'bool', lab:'Suy yếu (frailty) vừa–nặng'},
+  {k:'lifeShort', type:'bool', lab:'Tuổi thọ dự kiến <3 năm'}
+ ]},
+ {id:'dm', t:'Đái tháo đường', open:false, items:[
+  {k:'dm', type:'one', lab:'ĐTĐ týp 2', o:[['none','Không'],['t2','Có']]},
+  {type:'nums', f:[{k:'a1c',lab:'HbA1c (%)'}], show:function(){return S.dm==='t2';}},
+  {k:'dmdrug', type:'multi', lab:'Thuốc hạ đường huyết', o:[['metf','Metformin'],['sglt2','Ức chế SGLT2'],['glp1','GLP-1 RA'],['insulin','Insulin'],['su','Sulfonylurea'],['dpp4','DPP-4i']], show:function(){return S.dm==='t2';}}
+ ]},
+ {id:'kid', t:'Chức năng thận', open:false, items:[
+  {type:'numunit', k:'cr', lab:'Creatinine máu', u:'crU', uo:[['umol','µmol/L'],['mg','mg/dL']]},
+  {type:'numunit', k:'uacr', lab:'Albumin/creatinine niệu (uACR)', u:'uacrU', uo:[['mgg','mg/g'],['mgmmol','mg/mmol']]},
+  {k:'dialysis', type:'bool', lab:'Đang lọc máu'},
+  {type:'calc', id:'kcalc'}
+ ]},
+ {id:'lip', t:'Lipid máu', open:false, items:[
+  {k:'lipU', type:'one', lab:'Đơn vị lipid', o:[['mmol','mmol/L'],['mg','mg/dL']]},
+  {type:'nums', f:[{k:'ldl',lab:'LDL-C hiện tại'},{k:'ldl0',lab:'LDL-C nền (chưa điều trị)'},{k:'tc',lab:'Cholesterol TP'},{k:'hdl',lab:'HDL-C'},{k:'tg',lab:'Triglyceride'}]},
+  {type:'numunit', k:'lpa', lab:'Lp(a)', u:'lpaU', uo:[['mg','mg/dL'],['nmol','nmol/L']]},
+  {k:'statin', type:'one', lab:'Statin', o:[['none','Chưa dùng'],['mod','Cường độ trung bình'],['high','Cường độ cao/tối đa dung nạp']]},
+  {k:'statinIntol', type:'bool', lab:'Không dung nạp statin'},
+  {k:'addon', type:'multi', lab:'Thuốc phối hợp', o:[['eze','Ezetimibe'],['pcsk9','PCSK9 mAb'],['incl','Inclisiran'],['bempe','Acid bempedoic']]}
+ ]},
+ {id:'bl', t:'Huyết học & nguy cơ chảy máu', open:false, items:[
+  {type:'nums', f:[{k:'hb',lab:'Hb (g/L)'},{k:'plt',lab:'Tiểu cầu (G/L)'}]},
+  {k:'bl', type:'multi', lab:'Tiêu chí ARC-HBR khác (tuổi, eGFR, Hb, TC, OAC, NSAID, đột quỵ/XHN được tính tự động)', o:[['bleed6','Chảy máu cần nhập viện/truyền máu ≤6 tháng (hoặc tái phát)'],['bleed12','Chảy máu cần nhập viện/truyền máu ≤12 tháng'],['diath','Rối loạn đông máu mạn'],['cirr','Xơ gan có tăng áp cửa'],['cancer','Ung thư hoạt động ≤12 tháng'],['ich','XHN chấn thương ≤12 tháng / dị dạng ĐTM não / đột quỵ vừa–nặng ≤6 tháng'],['surgnow','Phẫu thuật lớn không trì hoãn được khi đang DAPT'],['surgrecent','Phẫu thuật/chấn thương lớn ≤30 ngày trước PCI']]},
+  {k:'gi', type:'bool', lab:'Nguy cơ xuất huyết tiêu hoá cao (đánh giá lâm sàng)'}
+ ]},
+ {id:'hf', t:'Chức năng tim', open:false, items:[
+  {type:'nums', f:[{k:'lvef',lab:'LVEF (%)'}]},
+  {k:'hfsx', type:'bool', lab:'Có triệu chứng/dấu hiệu suy tim'}
+ ]}
+];
+
+function hintText(h, d){
+  if(h==='ischHint'){
+    var parts=[]; if(d.ischAnat.length) parts.push('Giải phẫu/thủ thuật: '+d.ischAnat.join(', ')); if(d.ischClin.length) parts.push('Lâm sàng: '+d.ischClin.join(', '));
+    var lab={high:'Cao',mod:'Trung bình',low:'Thấp'};
+    return 'Tự động: <b>'+lab[d.ischAuto]+'</b>'+(parts.length?' – '+esc(parts.join(' · ')):' – không có yếu tố nào')+'. Tiêu chí lấy từ chú thích (c, e) bảng khuyến cáo 17 – ESC 2024 HCVM mạn; cách xếp “cao” (có yếu tố giải phẫu/thủ thuật) và “trung bình” (chỉ ĐTĐ/CKD) là quy ước của công cụ, bác sĩ có thể chọn lại.';
+  }
+  if(h==='doseHint'){
+    return 'Tiêu chí giảm liều theo Bảng 11 – ESC 2024 Rung nhĩ. CrCl (Cockcroft–Gault): '+(d.crcl===null?'cần tuổi, cân nặng, creatinine':d.crcl+' mL/ph')+'.';
+  }
+  return '';
+}
+
+function buildRail(d){
+  var h='';
+  F.forEach(function(sec){
+    var opened = sec.open; try{ var o=JSON.parse(localStorage.getItem(KEY+'-open')||'{}'); if(o[sec.id]!==undefined) opened=o[sec.id]; }catch(e){}
+    h+='<details class="sec" data-sec="'+sec.id+'"'+(opened?' open':'')+'><summary><span>'+sec.t+'</span><span class="sum" data-sum="'+sec.id+'"></span></summary><div class="secbody">';
+    sec.items.forEach(function(it, ix){
+      if(it.show && !it.show()) return;
+      var fid = sec.id+'_'+(it.k||ix);
+      if(it.type==='one'||it.type==='multi'){
+        h+='<div class="field"><div class="lab" id="'+fid+'_l">'+it.lab+'</div><div class="chips" role="group" aria-labelledby="'+fid+'_l">';
+        it.o.forEach(function(o){
+          var on = it.type==='one'? S[it.k]===o[0] : (S[it.k]||[]).indexOf(o[0])>=0;
+          h+='<button type="button" class="chip" data-k="'+it.k+'" data-v="'+o[0]+'" data-t="'+it.type+'" aria-pressed="'+on+'">'+o[1]+'</button>';
+        });
+        h+='</div>'+(it.hint?'<p class="hint">'+hintText(it.hint,d)+'</p>':'')+'</div>';
+      } else if(it.type==='bool'){
+        h+='<div class="chips"><button type="button" class="chip" data-k="'+it.k+'" data-t="bool" aria-pressed="'+(!!S[it.k])+'">'+it.lab+'</button></div>';
+      } else if(it.type==='texts'){
+        h+='<div class="row">';
+        it.f.forEach(function(f){ h+='<label class="inp" for="in_'+f.k+'" style="flex:'+(f.w||1)+' 1 0"><span>'+f.lab+'</span><input type="text" id="in_'+f.k+'" data-k="'+f.k+'" autocomplete="off" spellcheck="false" value="'+esc(S[f.k]||'')+'"></label>'; });
+        h+='</div>';
+      } else if(it.type==='nums'){
+        h+='<div class="row">';
+        it.f.forEach(function(f){ h+='<label class="inp" for="in_'+f.k+'"><span>'+f.lab+'</span><input id="in_'+f.k+'" data-k="'+f.k+'" inputmode="decimal" autocomplete="off" value="'+esc(S[f.k]||'')+'"></label>'; });
+        h+='</div>';
+      } else if(it.type==='numunit'){
+        h+='<div class="row"><label class="inp" for="in_'+it.k+'"><span>'+it.lab+'</span><input id="in_'+it.k+'" data-k="'+it.k+'" inputmode="decimal" autocomplete="off" value="'+esc(S[it.k]||'')+'"></label><label class="inp" for="in_'+it.u+'"><span>Đơn vị</span><select id="in_'+it.u+'" data-k="'+it.u+'">';
+        it.uo.forEach(function(o){ h+='<option value="'+o[0]+'"'+(S[it.u]===o[0]?' selected':'')+'>'+o[1]+'</option>'; });
+        h+='</select></label></div>';
+      } else if(it.type==='date'){
+        h+='<label class="inp" for="in_pciDate"><span>'+it.lab+'</span><input type="date" id="in_pciDate" data-k="pciDate" value="'+esc(S.pciDate||'')+'"></label>';
+      } else if(it.type==='calc'){
+        h+='<div class="calc" id="kcalc"></div>';
+      }
+    });
+    h+='</div></details>';
+  });
+  document.getElementById('rail').innerHTML=h;
+}
+
+function updateSums(d){
+  var set={stemi:'STEMI',nstemi:'NSTEMI',ua:'ĐTNKÔĐ',ccs:'HCVM mạn'};
+  var ph=PHASES[d.pi].lab;
+  var sums={ctx:set[S.setting]+' · '+ph, pt:[S.pname||'', S.pid?('#'+S.pid):'', d.age?d.age+' tuổi':''].filter(Boolean).join(' · '), at:(S.ap||[]).length+' KTC'+(S.oac!=='none'?' + OAC':''), bp:(d.sbp?d.sbp+'/'+(d.dbp||'–'):''), dm:d.dm?(d.a1c!==null?'HbA1c '+d.a1c+'%':'Có'):'Không', kid:(d.egfr!==null?'eGFR '+d.egfr:''), lip:(d.ldl!==null?'LDL '+d.ldl+' mg/dL':''), bl:(d.hbr?'HBR':'Không HBR'), hf:(d.lvef!==null?'EF '+d.lvef+'%':'')};
+  Object.keys(sums).forEach(function(k){ var el=document.querySelector('[data-sum="'+k+'"]'); if(el) el.textContent=sums[k]; });
+  var kc=document.getElementById('kcalc');
+  if(kc) kc.innerHTML = 'eGFR (CKD-EPI 2021): <b>'+(d.egfr===null?'–':d.egfr+' mL/ph/1,73m²')+'</b> · CrCl (Cockcroft–Gault): <b>'+(d.crcl===null?'–':d.crcl+' mL/ph')+'</b>'+(d.uacr!==null?' · uACR ≈ '+Math.round(d.uacr)+' mg/g':'')+(d.ckd?' · <b>Có CKD</b>':'');
+}
+
+/* ---------- OUTPUT ---------- */
+function corClass(c){ c=String(c); if(c==='I'||c==='1') return 'c1'; if(c==='IIa'||c==='2a') return 'c2a'; if(c==='IIb'||c==='2b') return 'c2b'; return 'c3'; }
+var STL={do:'Áp dụng', opt:'Cân nhắc', no:'Tránh / không khuyến cáo', info:'Tham khảo'};
+function recHTML(x){
+  var r=R[x.id]; if(!r) return '';
+  var g=GL[r.g]; var soc=g.s==='ESC'?'esc':'aha';
+  return '<div class="rec '+x.st+'"><div class="bd"><span class="soc '+soc+'">'+(g.s==='ESC'?'ESC':'ACC/AHA')+'</span><span class="cor '+corClass(r.c)+'">'+r.c+'</span><span class="loe">'+(g.s==='ESC'?'Mức BC ':'LOE ')+r.l+'</span><span class="st '+x.st+'">'+STL[x.st]+'</span></div><p>'+esc(r.t)+'</p>'+(x.why?'<div class="why">↳ '+esc(x.why)+'</div>':'')+'<div class="src">'+esc(g.n)+'</div></div>';
+}
+function listHTML(arr){
+  var a=arr.filter(function(x){return !(UI.hideInfo && x.st==='info');});
+  var ord={do:0,no:1,opt:2,info:3};
+  a.sort(function(p,q){return ord[p.st]-ord[q.st];});
+  if(!a.length) return '<p class="small">Không có khuyến cáo phù hợp với dữ liệu hiện tại.</p>';
+  return '<div class="recs">'+a.map(recHTML).join('')+'</div>';
+}
+function colsHTML(o){
+  var showE = UI.filter!=='aha', showA = UI.filter!=='esc';
+  var h='<div class="cols'+((showE&&showA)?'':' one')+'">';
+  if(showE) h+='<div><div class="colhead esc">ESC</div>'+listHTML(o.esc||[])+'</div>';
+  if(showA) h+='<div><div class="colhead aha">ACC/AHA</div>'+listHTML(o.aha||[])+'</div>';
+  return h+'</div>';
+}
+function pill(ok, txtOk, txtBad){ return ok===null||ok===undefined? '<span class="pill p-info">Chưa có số liệu</span>' : (ok?'<span class="pill p-ok">'+(txtOk||'Đạt')+'</span>':'<span class="pill p-bad">'+(txtBad||'Chưa đạt')+'</span>'); }
+function mmol(mg){ return (Math.round(mg/38.67*100)/100).toString().replace('.',','); }
+
+function markerPos(d){
+  if(S.pciDate){ var m=monthsSince(S.pciDate); if(m!==null){ var bp=[0,0.25,1,3,6,12,24,48]; for(var i=0;i<7;i++){ if(m<bp[i+1]) return i+(m-bp[i])/(bp[i+1]-bp[i]); } return 7; } }
+  return d.pi+0.5;
+}
+function laneHTML(lab, cls, segs, mk){
+  var h='<div class="lane"><div class="ln" style="color:var(--'+cls+')">'+lab+'</div><div class="track">';
+  segs.forEach(function(s){ h+='<div class="seg2 '+s.k+'" style="left:'+(s.a/7*100)+'%;width:'+((s.b-s.a)/7*100)+'%" title="'+esc(s.t)+'">'+esc(s.t)+'</div>'; });
+  h+='<div class="marker" style="left:calc('+(mk/7*100)+'% - 1px)" aria-label="Hiện tại"></div></div></div>';
+  return h;
+}
+function timelineHTML(R0){
+  var d=R0.d, p=R0.at.plan, mk=markerPos(d);
+  var h='<div class="tl">';
+  if(UI.filter!=='aha') h+=laneHTML('ESC','esc',p.esc,mk);
+  if(UI.filter!=='esc') h+=laneHTML('ACC/AHA','aha',p.aha,mk);
+  h+='</div><div class="ticks">';
+  ['PCI','1 tuần','1 th','3 th','6 th','12 th','24 th'].forEach(function(t,i){ h+='<span style="left:'+(i/7*100)+'%">'+t+'</span>'; });
+  h+='</div><div class="legend"><span>▮ vạch đen = thời điểm hiện tại</span><span>Sơ đồ theo thứ bậc thời gian, không theo tỉ lệ</span></div>';
+  return h;
+}
+
+function monthsSince(ds){ var t=Date.parse(ds); if(isNaN(t)) return null; var m=(Date.now()-t)/(1000*3600*24*30.44); return m<0?null:m; }
+
+function overview(R0){
+  var d=R0.d, h='';
+  var set={stemi:'STEMI',nstemi:'NSTEMI',ua:'Đau thắt ngực không ổn định',ccs:'HCVM mạn – PCI chương trình'};
+  h+='<div class="card"><h2>Tổng quan · '+set[S.setting]+' · '+PHASES[d.pi].lab+' sau PCI'+(S.demo?' <span class="pill p-info">Ca minh hoạ</span>':'')+'</h2>';
+  h+='<div class="tiles">';
+  h+='<div class="tile"><div class="k">ARC-HBR</div><div class="v">'+(d.hbr?'<span style="color:var(--bad)">HBR</span>':'Không HBR')+'</div><div class="s">'+d.hbrMaj.length+' tiêu chí chính · '+d.hbrMin.length+' tiêu chí phụ</div></div>';
+  var il={high:'Cao',mod:'Trung bình',low:'Thấp'};
+  h+='<div class="tile"><div class="k">Nguy cơ thiếu máu</div><div class="v">'+il[d.isch]+'</div><div class="s">'+(S.ischOv==='auto'?'Tự động theo tiêu chí ESC':'Bác sĩ chọn')+'</div></div>';
+  h+='<div class="tile"><div class="k">eGFR / CrCl</div><div class="v">'+(d.egfr===null?'–':d.egfr)+' / '+(d.crcl===null?'–':d.crcl)+'</div><div class="s">mL/ph '+(d.ckd?'· có CKD':'')+'</div></div>';
+  if(d.oacInd==='af') h+='<div class="tile"><div class="k">CHA₂DS₂-VA</div><div class="v">'+d.cha+'</div><div class="s">'+esc(d.chaParts.join(', '))+'</div></div>';
+  h+='<div class="tile"><div class="k">ACC/AHA 2026 lipid</div><div class="v">'+(d.vhr?'Nguy cơ rất cao':'Không rất cao')+'</div><div class="s">'+d.vhrMajor.length+' biến cố chính · '+d.vhrHrc.length+' tình trạng nguy cơ cao</div></div>';
+  h+='</div>';
+  // timeline
+  h+='<h3>Lộ trình chống huyết khối dự kiến</h3>'+timelineHTML(R0);
+  // targets
+  var bp=R0.bp, lp=R0.lip, dm=R0.dm;
+  h+='<h3>Mục tiêu điều trị</h3><div class="tablewrap"><table class="tg"><thead><tr><th>Chỉ số</th><th>Hiện tại</th><th>ESC</th><th>ACC/AHA</th></tr></thead><tbody>';
+  var showE=UI.filter!=='aha', showA=UI.filter!=='esc';
+  function cell(show, t, ok){ return show? '<td>'+esc(t)+'<br>'+ok+'</td>' : '<td class="small">—</td>'; }
+  h+='<tr><td>Huyết áp</td><td>'+(d.sbp!==null?d.sbp+'/'+(d.dbp===null?'–':d.dbp)+' mmHg':'–')+'</td>'+cell(showE,bp.tgt.esc, bp.st?(bp.st.escLow?'<span class="pill p-warn">HATT <120</span>':pill(bp.st.escOK)):pill(null))+cell(showA,bp.tgt.aha, bp.st?pill(bp.st.ahaOK):pill(null))+'</tr>';
+  h+='<tr><td>LDL-C</td><td>'+(d.ldl!==null?d.ldl+' mg/dL ('+mmol(d.ldl)+' mmol/L)'+(lp.st&&lp.st.red50!==null?'<br><span class="small">giảm '+Math.round(lp.st.red50*100)+'% so với nền</span>':''):'–')+'</td>'+cell(showE,lp.tgt.esc, lp.st?pill(lp.st.escOK):pill(null))+cell(showA,lp.tgt.aha, lp.st?pill(lp.st.ahaOK):pill(null))+'</tr>';
+  h+='<tr><td>Non-HDL-C</td><td>'+(d.nonhdl!==null?d.nonhdl+' mg/dL':'–')+'</td><td class="small">Không có đích non-HDL-C trong ESC 2023 HCVC / 2024 HCVM mạn</td>'+cell(showA,'<'+d.ahaNonHdlGoal+' mg/dL', d.nonhdl!==null?pill(d.nonhdl<d.ahaNonHdlGoal):pill(null))+'</tr>';
+  if(d.dm) h+='<tr><td>HbA1c</td><td>'+(d.a1c!==null?d.a1c+'%':'–')+'</td>'+cell(showE,dm.tgt.esc, dm.st?pill(dm.st.ok):pill(null))+cell(showA,dm.tgt.aha, dm.st?pill(dm.st.ok):pill(null))+'</tr>';
+  h+='</tbody></table></div>';
+  // warnings
+  var w=R0.at.warn;
+  h+='<h3>Đối chiếu đơn thuốc hiện tại</h3>';
+  if(!w.length) h+='<p class="small">Không phát hiện điểm lệch so với khuyến cáo dựa trên dữ liệu đã nhập.</p>';
+  else { h+='<ul class="warns">'; w.forEach(function(x){ var refs=(x.refs||[]).filter(function(id){return R[id];}).map(function(id){var r=R[id]; return GL[r.g].n+' ('+r.c+'/'+r.l+')';}); h+='<li class="'+(x.lvl==='no'?'no':'')+'">'+esc(x.t)+(refs.length?'<span class="refs">Căn cứ: '+esc(refs.join('; '))+'</span>':'')+'</li>'; }); h+='</ul>'; }
+  if(R0.at.notes.length){ R0.at.notes.forEach(function(n){ h+='<p class="note">'+esc(n)+'</p>'; }); }
+  h+='<p class="disc">Công cụ hỗ trợ ra quyết định, chỉ chọn và trình bày lại các khuyến cáo đã công bố; không thay thế đánh giá lâm sàng. Bản dịch tiếng Việt là tóm lược – khi cần, đối chiếu nguyên văn trong hướng dẫn gốc (tab “Nguồn”).</p>';
+  h+='</div>';
+  return h;
+}
+
+function bleedTab(R0){
+  var d=R0.d, h='<div class="card"><h2>Nguy cơ chảy máu (ARC-HBR)</h2>';
+  h+='<p>'+(d.hbr?'<span class="pill p-bad">Nguy cơ chảy máu cao</span>':'<span class="pill p-ok">Không đạt tiêu chí HBR</span>')+' <span class="small">HBR khi có ≥1 tiêu chí chính hoặc ≥2 tiêu chí phụ.</span></p>';
+  h+='<div class="cols"><div><div class="lab small"><b>Tiêu chí chính có mặt</b></div><ul class="plain">'+(d.hbrMaj.length?d.hbrMaj.map(function(x){return '<li>'+esc(x)+'</li>';}).join(''):'<li class="small">Không</li>')+'</ul></div><div><div class="lab small"><b>Tiêu chí phụ có mặt</b></div><ul class="plain">'+(d.hbrMin.length?d.hbrMin.map(function(x){return '<li>'+esc(x)+'</li>';}).join(''):'<li class="small">Không</li>')+'</ul></div></div>';
+  h+='<p class="note">Tiêu chí ARC-HBR theo Bảng 22 – ACC/AHA 2025 HCVC (Urban và cs. 2019); ESC 2023 HCVC định nghĩa HBR là 1 tiêu chí chính hoặc 2 tiêu chí phụ theo ARC-HBR. Thang PRECISE-DAPT không được tính tự động trong công cụ này.</p>';
+  h+=colsHTML(R0.bl)+'</div>';
+  return h;
+}
+
+function sourcesTab(){
+  var h='<div class="card"><h2>Nguồn và cách đọc mức khuyến cáo</h2>';
+  h+='<h3>Hướng dẫn được sử dụng</h3><ul class="srcs">';
+  Object.keys(GL).forEach(function(k){ var g=GL[k]; h+='<li><b>'+esc(g.n)+'</b><br><span class="small">'+esc(g.c)+'</span></li>'; });
+  h+='</ul><h3>Thang phân loại</h3><div class="tablewrap"><table class="tg"><thead><tr><th>ESC (Class)</th><th>ACC/AHA (COR)</th><th>Ý nghĩa</th></tr></thead><tbody>';
+  h+='<tr><td><span class="cor c1">I</span></td><td><span class="cor c1">1</span></td><td>Khuyến cáo / chỉ định (lợi ích ≫ nguy cơ)</td></tr>';
+  h+='<tr><td><span class="cor c2a">IIa</span></td><td><span class="cor c2a">2a</span></td><td>Nên cân nhắc / hợp lý</td></tr>';
+  h+='<tr><td><span class="cor c2b">IIb</span></td><td><span class="cor c2b">2b</span></td><td>Có thể cân nhắc / có thể hợp lý</td></tr>';
+  h+='<tr><td><span class="cor c3">III</span></td><td><span class="cor c3">3: No benefit / 3: Harm</span></td><td>Không khuyến cáo / không lợi ích / có hại</td></tr>';
+  h+='</tbody></table></div>';
+  h+='<p class="small">Mức bằng chứng ESC: A, B, C (ESC 2026 tách B thành B1/B2). ACC/AHA: A, B-R (ngẫu nhiên), B-NR (không ngẫu nhiên), C-LD (dữ liệu hạn chế), C-EO (đồng thuận chuyên gia).</p>';
+  h+='<h3>Ghi chú phương pháp</h3><ul class="plain"><li>Mỗi khuyến cáo hiển thị đúng Class/COR và Level/LOE của bảng khuyến cáo trong hướng dẫn gốc; công cụ chỉ chọn khuyến cáo phù hợp với dữ liệu nhập và gắn nhãn “Áp dụng / Cân nhắc / Tránh / Tham khảo”.</li><li>Mục tiêu HbA1c của ACC/AHA (CKM 2026) nằm trong phần tóm tắt, không có COR/LOE riêng. ESC 2023 Đái tháo đường là nguồn bổ sung ngoài 12 tài liệu được cung cấp.</li><li>Định nghĩa “nguy cơ rất cao” (ACC/AHA 2026, Hình 10): ≥2 biến cố ASCVD chính, hoặc 1 biến cố chính + ≥2 tình trạng nguy cơ cao (tuổi ≥65, tái thông ĐMV, hút thuốc, ĐTĐ, suy tim, THA, LDL-C ≥100 mg/dL dù statin tối đa + ezetimibe).</li><li>eGFR theo CKD-EPI 2021 (không dùng hệ số chủng tộc); CrCl theo Cockcroft–Gault cho chỉnh liều DOAC.</li></ul>';
+  h+='</div>';
+  return h;
+}
+
+var TABS=[['tong','Tổng quan'],['gd','Hướng dẫn điều trị'],['at','Chống huyết khối'],['bl','Chảy máu'],['bp','Huyết áp'],['dm','ĐTĐ & chuyển hoá'],['lip','Lipid'],['kid','Thận'],['oth','Điều trị khác'],['src','Nguồn']];
+function countDo(o){ if(!o) return 0; var n=0; ['esc','aha'].forEach(function(s){ if((UI.filter==='esc'&&s==='aha')||(UI.filter==='aha'&&s==='esc')) return; (o[s]||[]).forEach(function(x){ if(x.st==='do'||x.st==='no') n++; }); }); return n; }
+
+var LAST=null;
+function render(){
+  var R0=evaluate(S); LAST=R0;
+  updateSums(R0.d);
+  var map={at:R0.at, bl:R0.bl, bp:R0.bp, dm:R0.dm, lip:R0.lip, kid:R0.kid, oth:R0.oth};
+  var h='<div class="card" style="padding:8px 12px 0"><div class="tabs" role="tablist">';
+  TABS.forEach(function(t){ var n= map[t[0]]? countDo(map[t[0]]) : 0; h+='<button type="button" role="tab" class="tab" id="tab_'+t[0]+'" data-tab="'+t[0]+'" aria-selected="'+(UI.tab===t[0])+'">'+t[1]+(n?'<span class="n">'+n+'</span>':'')+'</button>'; });
+  h+='</div></div>';
+  var t=UI.tab, body='';
+  if(t==='tong') body=overview(R0);
+  else if(t==='bl') body=bleedTab(R0);
+  else if(t==='src') body=sourcesTab();
+    else if(t==='gd') body='<div class="card"><h2>Hướng dẫn dùng thuốc và điều trị tiếp theo · '+PHASES[R0.d.pi].lab+' sau PCI</h2>'+guidanceHTML(R0)+'</div>';
+  else {
+    var titles={at:'Chống huyết khối – '+PHASES[R0.d.pi].lab+' sau PCI', bp:'Huyết áp', dm:'Đái tháo đường, cân nặng & chuyển hoá', lip:'Lipid máu', kid:'Bệnh thận mạn', oth:'Chẹn beta, RAAS, MRA, suy tim, colchicine, vaccine, phục hồi chức năng'};
+    body='<div class="card"><h2>'+titles[t]+'</h2>';
+    if(t==='at'){ body+=timelineHTML(R0); R0.at.notes.forEach(function(n){ body+='<p class="note">'+esc(n)+'</p>'; }); }
+    if(t==='bp') body+='<p class="small">Đích ESC: <b>'+esc(R0.bp.tgt.esc)+'</b> · Đích ACC/AHA: <b>'+esc(R0.bp.tgt.aha)+'</b></p>';
+    if(t==='lip') body+='<p class="small">Đích ESC: <b>'+esc(R0.lip.tgt.esc)+'</b> · Đích ACC/AHA: <b>'+esc(R0.lip.tgt.aha)+'</b>'+(R0.d.vhr?' (nhóm nguy cơ rất cao: '+esc(R0.d.vhrMajor.concat(R0.d.vhrHrc).join(', '))+')':'')+'</p>';
+    if(t==='dm' && R0.d.dm) body+='<p class="small">Đích HbA1c – ESC: <b>'+esc(R0.dm.tgt.esc)+'</b> · ACC/AHA: <b>'+esc(R0.dm.tgt.aha)+'</b></p>';
+    if(t==='dm' && !R0.d.dm) body+='<p class="small">BN không có ĐTĐ týp 2. Các khuyến cáo dưới đây liên quan cân nặng (cần nhập cân nặng, chiều cao).</p>';
+    if(t==='kid' && R0.kid.none) body+='<p class="small">Chưa đủ tiêu chí CKD (eGFR <60 hoặc uACR ≥30 mg/g) theo dữ liệu đã nhập.</p>';
+    if(t==='kid') body+='<p class="note">Khuyến cáo CKD của CKM 2026 được viết cho “CKM giai đoạn 2–3”; BN sau PCI thuộc giai đoạn 4 (có bệnh tim mạch lâm sàng) – dùng để tham khảo cùng ESC 2026 CKD.</p>';
+    body+=colsHTML(map[t])+'</div>';
+  }
+  document.getElementById('board').innerHTML=h+body;
+  save();
+}
+
+/* ---------- guidance ---------- */
+function refBadges(it){
+  var h='', seen={};
+  it.refs.forEach(function(id){ var r=R[id]; if(!r) return; var g=GL[r.g]; var e=g.s==='ESC'; var key=r.g+'|'+r.c+'|'+r.l; if(seen[key]) return; seen[key]=1;
+    h+='<span class="rb '+(e?'esc':'aha')+'" title="'+esc(g.n)+'">'+(e?'ESC ':'ACC/AHA ')+esc(r.c)+' · '+esc(r.l)+' – '+esc(g.n.replace(/^(ESC\/?\w*|ACC\/AHA|AHA\/ACC|AHA\/ACC\/ADA\/ASN) /,''))+'</span>'; });
+  if(it.tbl) h+='<span class="rb tbl">'+esc(it.tbl)+'</span>';
+  return h;
+}
+function guidanceHTML(R0){
+  var h='';
+  R0.gd.forEach(function(sec){
+    h+='<div class="gsec '+sec.k+'"><h3>'+esc(sec.t)+(sec.k==='now'?'<span class="tag">Áp dụng ngay</span>':'')+'</h3><ul class="glist">';
+    sec.items.forEach(function(it){ h+='<li><p>'+esc(it.t)+'</p><div class="refs2">'+refBadges(it)+'</div></li>'; });
+    h+='</ul>'+(sec.dapt?daptSub(R0, sec.dapt):'')+'</div>';
+  });
+  h+='<p class="disc">Mỗi dòng là cách áp dụng các khuyến cáo được ghi ngay bên dưới (hiệp hội · mức khuyến cáo · mức bằng chứng). Liều thuốc lấy từ bảng/khuyến cáo trong hướng dẫn gốc. Ngày dự kiến (≈) chỉ hiện khi nhập ngày PCI.</p>';
+  return h;
+}
+
+/* ---------- DAPT duration tab ---------- */
+function stLookup(R0){
+  var m={};
+  ['at','bl','kid','oth'].forEach(function(g){ var o=R0[g]; if(!o) return; ['esc','aha'].forEach(function(s){ (o[s]||[]).forEach(function(x){ if(!m[x.id] || m[x.id].st==='info') m[x.id]=x; }); }); });
+  return m;
+}
+function daptItems(ids, lk){ return ids.map(function(id){ return lk[id] ? lk[id] : I(id,'info'); }); }
+function daptCtx(d){
+  var p=[d.acs?'HCVC':'HCVM mạn', d.hbr?'HBR':'không HBR', 'nguy cơ thiếu máu '+({high:'cao',mod:'trung bình',low:'thấp'}[d.isch]||'–')];
+  if(d.ckd) p.push('có CKD'); p.push(d.oacInd!=='none'?'có chỉ định OAC':'không có chỉ định OAC');
+  return p.join(' · ');
+}
+function daptRb(id){ var r=R[id], g=GL[r.g], e=g.s==='ESC'; return '<span class="rb '+(e?'esc':'aha')+'" title="'+esc(g.n)+'">'+(e?'ESC ':'ACC/AHA ')+esc(r.c)+' · '+esc(r.l)+' – '+esc(g.n.replace(/^(ESC\/?\w*|ACC\/AHA|AHA\/ACC|AHA\/ACC\/ADA\/ASN) /,''))+'</span>'; }
+function daptSub(R0, gs){
+  if(!gs.length) return '';
+  var d=R0.d, lk=stLookup(R0), h='<p class="small" style="margin:10px 0 2px"><b>Khuyến cáo về thời gian DAPT</b> · '+esc(daptCtx(d))+' – chỉ hiện khuyến cáo khớp nguy cơ thiếu máu và chảy máu của BN.</p>';
+  gs.forEach(function(g){
+    h+='<h4 class="dsub">'+esc(g.t)+'</h4><ul class="glist">';
+    g.esc.concat(g.aha).forEach(function(id){ var x=lk[id]; h+='<li><p>'+(x&&x.st==='no'?'<span class="pill p-bad">Tránh</span> ':'')+esc(R[id].t)+'</p><div class="refs2">'+daptRb(id)+'</div></li>'; });
+    if(!g.aha.length && g.ahaNote) h+='<li><p class="small">'+esc(g.ahaNote)+'</p></li>';
+    h+='</ul>';
+  });
+  return h;
+}
+
+/* ---------- print report ---------- */
+var REPORT_CSS = '#printArea, .rp{font-family:"Be Vietnam Pro",Arial,sans-serif; color:#111; font-size:11.5pt; line-height:1.4}'+
+ '.rp h1{font-size:16pt; margin:0 0 2px} .rp .meta{color:#555; font-size:9.5pt; margin:0 0 10px}'+
+ '.rp h2{font-size:12.5pt; margin:14px 0 6px; padding-bottom:3px; border-bottom:1.5px solid #0d6e6e; break-after:avoid}'+
+ '.rp h3{font-size:11pt; margin:10px 0 4px; break-after:avoid}'+
+ '.rp table{width:100%; border-collapse:collapse; font-size:10pt; margin:4px 0}'+
+ '.rp th,.rp td{border:1px solid #bbb; padding:4px 6px; text-align:left; vertical-align:top} .rp th{background:#eef2f4}'+
+ '.rp ul{margin:2px 0 6px; padding-left:18px} .rp li{margin:2px 0; break-inside:avoid}'+
+ '.rp .rb{display:inline-block; font-size:8.5pt; border:1px solid #888; border-radius:3px; padding:0 4px; margin:1px 3px 0 0; color:#333}'+
+ '.rp .rb.esc{border-color:#1f4f9c; color:#1f4f9c} .rp .rb.aha{border-color:#b4232f; color:#b4232f}'+
+ '.rp .no{color:#b42318; font-weight:600} .rp .opt{color:#8a5a00; font-weight:600}'+
+ '.rp .two{display:grid; grid-template-columns:1fr 1fr; gap:10px}'+
+ '.rp .warn{border-left:3px solid #b42318; padding:2px 8px; margin:3px 0; background:#fdf0ee}'+
+ '.rp .disc{font-size:9pt; color:#555; margin-top:12px; border-top:1px dashed #aaa; padding-top:6px}'+
+ '.rp .pbtn{display:inline-block; margin:0 0 10px; padding:6px 14px; border-radius:999px; background:#0d6e6e; color:#fff; border:0; font:inherit; cursor:pointer}'+
+ '@media print{.rp .pbtn{display:none} @page{size:A4; margin:14mm 12mm}}';
+function v(x, unit){ return (x===null||x===undefined||x==='')?'–':esc(x)+(unit?' '+unit:''); }
+function lbl(list, keys){ var m={}; list.forEach(function(o){m[o[0]]=o[1];}); return (keys||[]).map(function(k){return m[k]||k;}).join(', ')||'Không'; }
+function optsOf(k){ var r=null; F.forEach(function(sec){ sec.items.forEach(function(it){ if(it.k===k && it.o) r=it.o; }); }); return r||[]; }
+function reportBody(){
+  var R0=evaluate(S), d=R0.d, h='<div class="rp">';
+  var now=new Date();
+  h+='<h1>Kết quả quản lý bệnh nhân sau PCI</h1><p class="meta">In ngày '+fmtDate(now.getTime())+' · Đối chiếu khuyến cáo ESC và ACC/AHA'+(S.demo?' · Ca minh hoạ':'')+'</p>';
+  // patient
+  h+='<h2>1. Đặc điểm bệnh nhân</h2><table><tbody>';
+  h+='<tr><th>Họ và tên</th><td><b>'+esc(S.pname||'…………………………')+'</b> · Mã BN: <b>'+esc(S.pid||'…………')+'</b></td></tr>';
+  h+='<tr><th>Chỉ định PCI</th><td>'+lbl(optsOf('setting'),[S.setting])+' · '+PHASES[d.pi].lab+' sau PCI'+(S.pciDate?' (ngày PCI '+fmtDate(Date.parse(S.pciDate))+')':'')+' · '+lbl(optsOf('stent'),[S.stent])+'</td></tr>';
+  h+='<tr><th>Đặc điểm thủ thuật</th><td>'+lbl(optsOf('feat'),S.feat)+'</td></tr>';
+  h+='<tr><th>Bệnh nhân</th><td>'+v(d.age,'tuổi')+' · '+(S.sex==='f'?'Nữ':'Nam')+' · '+v(d.wt,'kg')+(d.bmi?' · BMI '+d.bmi:'')+' · Hút thuốc: '+lbl(optsOf('smoke'),[S.smoke])+'</td></tr>';
+  h+='<tr><th>Tiền sử</th><td>'+lbl(optsOf('hx'),S.hx)+(S.angina?'; còn đau thắt ngực':'')+'</td></tr>';
+  h+='<tr><th>Thuốc chống huyết khối</th><td>Kháng tiểu cầu: '+lbl(optsOf('ap'),S.ap)+' · Chỉ định OAC: '+lbl(optsOf('oacInd'),[S.oacInd])+' · OAC: '+lbl(optsOf('oac'),[S.oac])+(['apix','riva','dabi','edox'].indexOf(S.oac)>=0?' ('+lbl(optsOf('oacDose'),[S.oacDose])+')':'')+' · Khác: '+lbl(optsOf('otherdrug'),S.otherdrug)+'</td></tr>';
+  h+='<tr><th>Huyết áp</th><td>THA: '+(d.htn?'Có':'Không')+' · '+(d.sbp!==null?d.sbp+'/'+(d.dbp===null?'–':d.dbp)+' mmHg':'chưa nhập')+'</td></tr>';
+  h+='<tr><th>Đái tháo đường</th><td>'+(d.dm?'ĐTĐ týp 2 · HbA1c '+v(d.a1c,'%')+' · Thuốc: '+lbl(optsOf('dmdrug'),S.dmdrug):'Không')+'</td></tr>';
+  h+='<tr><th>Thận</th><td>Creatinine '+v(S.cr, S.crU==='mg'?'mg/dL':'µmol/L')+' · eGFR '+v(d.egfr,'mL/ph/1,73m²')+' · CrCl '+v(d.crcl,'mL/ph')+' · uACR '+(d.uacr!==null?Math.round(d.uacr)+' mg/g':'–')+(d.dialysis?' · đang lọc máu':'')+(d.ckd?' · <b>CKD</b>':'')+'</td></tr>';
+  h+='<tr><th>Lipid</th><td>LDL-C '+(d.ldl!==null?d.ldl+' mg/dL ('+mmol(d.ldl)+' mmol/L)':'–')+' · non-HDL-C '+v(d.nonhdl,'mg/dL')+' · TG '+v(d.tg,'mg/dL')+' · Lp(a) '+v(d.lpaRaw, S.lpaU==='nmol'?'nmol/L':'mg/dL')+' · Statin: '+lbl(optsOf('statin'),[S.statin])+(S.addon&&S.addon.length?' + '+lbl(optsOf('addon'),S.addon):'')+(S.statinIntol?' · không dung nạp statin':'')+'</td></tr>';
+  h+='<tr><th>Huyết học · Tim</th><td>Hb '+v(d.hb,'g/L')+' · Tiểu cầu '+v(d.plt,'G/L')+' · LVEF '+v(d.lvef,'%')+(d.hf?' · có suy tim':'')+'</td></tr>';
+  h+='</tbody></table>';
+  // risk
+  var il={high:'Cao',mod:'Trung bình',low:'Thấp'};
+  h+='<h2>2. Phân tầng nguy cơ</h2><ul>';
+  h+='<li><b>ARC-HBR:</b> '+(d.hbr?'<span class="no">Nguy cơ chảy máu cao</span>':'Không HBR')+(d.hbrMaj.length?' · Chính: '+esc(d.hbrMaj.join('; ')):'')+(d.hbrMin.length?' · Phụ: '+esc(d.hbrMin.join('; ')):'')+'</li>';
+  h+='<li><b>Nguy cơ thiếu máu/huyết khối:</b> '+il[d.isch]+(S.ischOv==='auto'?' (tự động)':' (bác sĩ chọn)')+'</li>';
+  if(d.oacInd==='af') h+='<li><b>CHA₂DS₂-VA:</b> '+d.cha+' ('+esc(d.chaParts.join(', '))+')</li>';
+  h+='<li><b>ACC/AHA 2026 lipid:</b> '+(d.vhr?'Nguy cơ rất cao':'Không thuộc nhóm nguy cơ rất cao')+'</li></ul>';
+  // targets
+  var bp=R0.bp, lp=R0.lip, dmr=R0.dm;
+  function ok(x){ return x===null||x===undefined?'':(x?' – đạt':' – <span class="no">chưa đạt</span>'); }
+  h+='<h2>3. Mục tiêu điều trị</h2><table><thead><tr><th>Chỉ số</th><th>Hiện tại</th><th>ESC</th><th>ACC/AHA</th></tr></thead><tbody>';
+  h+='<tr><td>Huyết áp</td><td>'+(d.sbp!==null?d.sbp+'/'+(d.dbp===null?'–':d.dbp):'–')+'</td><td>'+esc(bp.tgt.esc)+(bp.st?ok(bp.st.escOK):'')+'</td><td>'+esc(bp.tgt.aha)+(bp.st?ok(bp.st.ahaOK):'')+'</td></tr>';
+  h+='<tr><td>LDL-C</td><td>'+(d.ldl!==null?d.ldl+' mg/dL':'–')+'</td><td>'+esc(lp.tgt.esc)+(lp.st?ok(lp.st.escOK):'')+'</td><td>'+esc(lp.tgt.aha)+(lp.st?ok(lp.st.ahaOK):'')+'</td></tr>';
+  if(d.dm) h+='<tr><td>HbA1c</td><td>'+v(d.a1c,'%')+'</td><td>'+esc(dmr.tgt.esc)+(dmr.st?ok(dmr.st.ok):'')+'</td><td>'+esc(dmr.tgt.aha)+(dmr.st?ok(dmr.st.ok):'')+'</td></tr>';
+  h+='</tbody></table>';
+  if(R0.at.warn.length){ h+='<h3>Điểm lệch so với khuyến cáo trong đơn thuốc hiện tại</h3>'; R0.at.warn.forEach(function(w){ h+='<div class="warn">'+esc(w.t)+'</div>'; }); }
+  // guidance
+  h+='<h2>4. Hướng dẫn dùng thuốc và điều trị tiếp theo</h2>';
+  var lk=stLookup(R0);
+  function rDapt(gs){ if(!gs.length) return; h+='<p style="margin:6px 0 2px"><b>Khuyến cáo về thời gian DAPT</b> <span style="color:#555">('+esc(daptCtx(d))+')</span></p>';
+    gs.forEach(function(g){ h+='<p style="margin:4px 0 2px"><i>'+esc(g.t)+'</i></p><ul>'; g.esc.concat(g.aha).forEach(function(id){ var r=R[id], x=lk[id]; h+='<li>'+(x&&x.st==='no'?'<span class="no">[Tránh]</span> ':'')+esc(r.t)+'<br>'+daptRb(id)+'</li>'; }); if(!g.aha.length && g.ahaNote) h+='<li><i>'+esc(g.ahaNote)+'</i></li>'; h+='</ul>'; }); }
+  R0.gd.forEach(function(sec){ h+='<h3>'+esc(sec.t)+'</h3><ul>'; sec.items.forEach(function(it){ h+='<li>'+esc(it.t)+'<br>'+refBadges(it)+'</li>'; }); h+='</ul>'; if(sec.dapt) rDapt(sec.dapt); });
+  // detailed recs
+  h+='<h2>5. Khuyến cáo chi tiết theo ESC và ACC/AHA</h2><p class="meta">Chỉ liệt kê mục “Áp dụng”, “Cân nhắc”, “Tránh”; các mục tham khảo xem trong ứng dụng.</p>';
+  var groups=[['Chống huyết khối',R0.at],['Nguy cơ chảy máu',R0.bl],['Huyết áp',R0.bp],['Đái tháo đường & chuyển hoá',R0.dm],['Lipid máu',R0.lip],['Bệnh thận mạn',R0.kid],['Điều trị khác',R0.oth]];
+  var STP={do:'Áp dụng',opt:'Cân nhắc',no:'Tránh'};
+  groups.forEach(function(g){
+    var cols=['esc','aha'].map(function(sd){ var L=(g[1][sd]||[]).filter(function(x){return x.st!=='info';}); var ord={do:0,no:1,opt:2}; L.sort(function(a,b){return ord[a.st]-ord[b.st];});
+      return '<div><b style="color:'+(sd==='esc'?'#1f4f9c':'#b4232f')+'">'+(sd==='esc'?'ESC':'ACC/AHA')+'</b><ul>'+(L.length?L.map(function(x){ var r=R[x.id]; return '<li><span class="'+(x.st==='no'?'no':x.st==='opt'?'opt':'')+'">['+STP[x.st]+' · '+esc(r.c)+'/'+esc(r.l)+']</span> '+esc(r.t)+' <i style="color:#666">('+esc(GL[r.g].n)+')</i></li>'; }).join(''):'<li>Không có mục phù hợp</li>')+'</ul></div>'; });
+    h+='<h3>'+g[0]+'</h3><div class="two">'+cols.join('')+'</div>';
+  });
+  h+='<p class="disc">Công cụ hỗ trợ ra quyết định: chỉ chọn và trình bày lại khuyến cáo đã công bố, không thay thế đánh giá lâm sàng. Nội dung tiếng Việt là bản tóm lược; đối chiếu nguyên văn trong hướng dẫn gốc khi cần.<br>Nguồn: '+Object.keys(GL).map(function(k){return esc(GL[k].n);}).join('; ')+'.</p>';
+  return h+'</div>';
+}
+function reportDoc(){
+  return '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kết quả quản lý sau PCI</title><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet"><style>body{margin:16px; background:#fff}'+REPORT_CSS+'</style></head><body><div class="rp"><button class="pbtn" onclick="window.print()">In</button></div>'+reportBody()+'<script>window.addEventListener("load",function(){setTimeout(function(){try{window.print()}catch(e){}},400)});<\/script></body></html>';
+}
+(function(){ var st=document.createElement('style'); st.textContent=REPORT_CSS; document.head.appendChild(st); })();
+var DL=null, DLtried=false;
+var DLP=null;
+function getDL(){
+  if(DLP) return DLP;
+  try{ if(window.claude && typeof window.claude.use==='function'){ DLP=window.claude.use('downloads').then(function(x){DL=x; return x;}, function(){return null;}); return DLP; } }catch(e){}
+  return Promise.resolve(null);
+}
+getDL();
+/* ---------- PDF: tự dựng trang từ bố cục HTML (không cần thư viện ngoài) ---------- */
+var PDFK = {W:794, H:1123, ML:45, MR:45, MT:53, MB:53, SC:2};
+function pdfColor(c){ var m=/rgba?\(([^)]+)\)/.exec(c||''); if(!m) return null; var p=m[1].split(',').map(parseFloat); if(p.length>3 && p[3]===0) return null; return c; }
+function pdfCollect(root){
+  var base=root.getBoundingClientRect(), ox=base.left, oy=base.top;
+  var boxes=[], texts=[], marks=[], keeps=[];
+  var els=root.querySelectorAll('*');
+  for(var i=0;i<els.length;i++){
+    var el=els[i], cs=getComputedStyle(el); if(cs.display==='none'||cs.visibility==='hidden') continue;
+    var r=el.getBoundingClientRect(); if(!r.width||!r.height) continue;
+    var b={x:r.left-ox, y:r.top-oy, w:r.width, h:r.height, bg:pdfColor(cs.backgroundColor), rad:parseFloat(cs.borderTopLeftRadius)||0, sides:[]};
+    ['Top','Right','Bottom','Left'].forEach(function(s){ var w=parseFloat(cs['border'+s+'Width']); var st=cs['border'+s+'Style']; var col=pdfColor(cs['border'+s+'Color']); if(w>0 && st!=='none' && col) b.sides.push({s:s,w:w,c:col,d:st==='dashed'}); });
+    if(b.bg || b.sides.length) boxes.push(b);
+    if(el.tagName==='LI'||el.tagName==='TR'||el.classList.contains('warn')) keeps.push([b.y, b.y+b.h]);
+    if(el.tagName==='LI' && cs.listStyleType!=='none'){ var fs=parseFloat(cs.fontSize), lh=parseFloat(cs.lineHeight)||fs*1.4; marks.push({x:r.left-ox-10, y:r.top-oy+lh/2, c:cs.color}); }
+  }
+  var tw=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n, rg=document.createRange(), re=/\S+/g, m;
+  while((n=tw.nextNode())){
+    var t=n.nodeValue; if(!/\S/.test(t)) continue;
+    var pcs=getComputedStyle(n.parentNode); if(pcs.display==='none'||pcs.visibility==='hidden') continue;
+    var font=pcs.fontStyle+' '+pcs.fontWeight+' '+pcs.fontSize+' '+pcs.fontFamily, head=!!n.parentNode.closest('h1,h2,h3,h4');
+    re.lastIndex=0;
+    while((m=re.exec(t))){
+      rg.setStart(n,m.index); rg.setEnd(n,m.index+m[0].length);
+      var rs=rg.getClientRects(); if(!rs.length) continue;
+      if(rs.length===1){ var q=rs[0]; texts.push({t:m[0], x:q.left-ox, y:q.top-oy, h:q.height, f:font, c:pcs.color, hd:head}); }
+      else { // từ bị ngắt dòng: đặt từng ký tự
+        for(var k=0;k<m[0].length;k++){ rg.setStart(n,m.index+k); rg.setEnd(n,m.index+k+1); var qq=rg.getBoundingClientRect(); if(qq.width) texts.push({t:m[0][k], x:qq.left-ox, y:qq.top-oy, h:qq.height, f:font, c:pcs.color, hd:head}); }
+      }
+    }
+  }
+  return {boxes:boxes, texts:texts, marks:marks, keeps:keeps, H:root.scrollHeight};
+}
+function pdfBreaks(L){
+  var PH=PDFK.H-PDFK.MT-PDFK.MB;
+  var iv=L.texts.map(function(t){return [t.y, t.y+t.h, t.hd];}).sort(function(a,b){return a[0]-b[0];});
+  var lines=[]; iv.forEach(function(v){ var l=lines[lines.length-1]; if(l && v[0] < l[1]-1){ l[1]=Math.max(l[1],v[1]); l[2]=l[2]&&v[2]; } else lines.push([v[0],v[1],v[2]]); });
+  var pages=[], s=0;
+  while(true){
+    var lim=s+PH; if(L.H<=lim || !lines.length || lines[lines.length-1][1]<=lim){ pages.push([s, Math.max(L.H,s+1)]); break; }
+    var j=-1; for(var i=0;i<lines.length;i++){ if(lines[i][1]<=lim) j=i; else break; }
+    while(j>0 && lines[j][2] && lines[j][0]>s) j--; // không để tiêu đề cuối trang
+    var e = (j>=0 && lines[j][1]>s+20) ? Math.min(lim, lines[j][1] + ((lines[j+1]?lines[j+1][0]:lim) - lines[j][1])/2) : lim;
+    L.keeps.forEach(function(k){ if(k[0]<e && k[1]>e && k[0]>s+40 && k[1]-k[0]<PH*0.5) e=Math.min(e,k[0]-2); });
+    // tiêu đề ngay trước điểm ngắt → đẩy xuống trang sau
+    for(var q=lines.length-1;q>=0;q--){ if(lines[q][1]<=e){ if(lines[q][2] && lines[q][0]>s+40) e=lines[q][0]-2; break; } }
+    pages.push([s,e]); s=e;
+    lines=lines.filter(function(l){return l[0]>=s-0.5;});
+  }
+  return pages;
+}
+function pdfDrawPage(L, pg, idx, total, foot){
+  var c=document.createElement('canvas'), K=PDFK; c.width=K.W*K.SC; c.height=K.H*K.SC;
+  var x=c.getContext('2d'); x.scale(K.SC,K.SC); x.fillStyle='#fff'; x.fillRect(0,0,K.W,K.H);
+  x.save(); x.beginPath(); x.rect(0, K.MT-1, K.W, pg[1]-pg[0]+2); x.clip(); x.translate(K.ML, K.MT-pg[0]);
+  L.boxes.forEach(function(b){
+    if(b.y>pg[1] || b.y+b.h<pg[0]) return;
+    if(b.bg){ x.fillStyle=b.bg; if(b.rad && x.roundRect){ x.beginPath(); x.roundRect(b.x,b.y,b.w,b.h,b.rad); x.fill(); } else x.fillRect(b.x,b.y,b.w,b.h); }
+    var uni = b.sides.length===4 && b.sides.every(function(s){return s.w===b.sides[0].w && s.c===b.sides[0].c;});
+    if(uni && b.rad && x.roundRect){ var s0=b.sides[0]; x.strokeStyle=s0.c; x.lineWidth=s0.w; x.setLineDash(s0.d?[3,2]:[]); x.beginPath(); x.roundRect(b.x+s0.w/2,b.y+s0.w/2,b.w-s0.w,b.h-s0.w,b.rad); x.stroke(); return; }
+    b.sides.forEach(function(s){ x.fillStyle=s.c;
+      if(!s.d){ if(s.s==='Top') x.fillRect(b.x,b.y,b.w,s.w); else if(s.s==='Bottom') x.fillRect(b.x,b.y+b.h-s.w,b.w,s.w); else if(s.s==='Left') x.fillRect(b.x,b.y,s.w,b.h); else x.fillRect(b.x+b.w-s.w,b.y,s.w,b.h); }
+      else { x.strokeStyle=s.c; x.lineWidth=s.w; x.setLineDash([3,2]); x.beginPath(); var yy=s.s==='Top'?b.y+s.w/2:b.y+b.h-s.w/2; x.moveTo(b.x,yy); x.lineTo(b.x+b.w,yy); x.stroke(); x.setLineDash([]); }
+    });
+  });
+  L.marks.forEach(function(m){ if(m.y<pg[0]||m.y>pg[1]) return; x.fillStyle=m.c; x.beginPath(); x.arc(m.x,m.y,1.8,0,7); x.fill(); });
+  x.textBaseline='alphabetic'; var lastF='';
+  L.texts.forEach(function(t){
+    if(t.y+t.h/2<pg[0] || t.y+t.h/2>pg[1]) return;
+    if(t.f!==lastF){ x.font=t.f; lastF=t.f; }
+    var mm=x.measureText(t.t), a=mm.fontBoundingBoxAscent||mm.actualBoundingBoxAscent||t.h*0.75, d=mm.fontBoundingBoxDescent||t.h*0.22;
+    x.fillStyle=t.c; x.fillText(t.t, t.x, t.y+(t.h-(a+d))/2+a);
+  });
+  x.restore();
+  x.font='400 8pt "Be Vietnam Pro",Arial,sans-serif'; x.fillStyle='#777'; x.textBaseline='alphabetic';
+  x.fillText(foot, K.ML, K.H-K.MB/2+4); var pn='Trang '+(idx+1)+'/'+total; x.fillText(pn, K.W-K.MR-x.measureText(pn).width, K.H-K.MB/2+4);
+  return c;
+}
+function pdfBytes(jpegs){ // jpegs: [{data:Uint8Array, w, h}] → PDF A4
+  var enc=new TextEncoder(), parts=[], off=0, xref=[];
+  function put(s){ var b=typeof s==='string'?enc.encode(s):s; parts.push(b); off+=b.length; }
+  function obj(n){ xref[n]=off; put(n+' 0 obj\n'); }
+  var N=jpegs.length, pw=595.28, ph=841.89;
+  put('%PDF-1.4\n');
+  obj(1); put('<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  var kids=[]; for(var i=0;i<N;i++) kids.push((3+i*3)+' 0 R');
+  obj(2); put('<< /Type /Pages /Kids ['+kids.join(' ')+'] /Count '+N+' >>\nendobj\n');
+  jpegs.forEach(function(j,i){
+    var p=3+i*3, im=p+1, ct=p+2, cs='q '+pw+' 0 0 '+ph+' 0 0 cm /Im0 Do Q';
+    obj(p); put('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pw+' '+ph+'] /Resources << /XObject << /Im0 '+im+' 0 R >> >> /Contents '+ct+' 0 R >>\nendobj\n');
+    obj(im); put('<< /Type /XObject /Subtype /Image /Width '+j.w+' /Height '+j.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+j.data.length+' >>\nstream\n'); put(j.data); put('\nendstream\nendobj\n');
+    obj(ct); put('<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream\nendobj\n');
+  });
+  var n=3+N*3, xo=off, s='xref\n0 '+n+'\n0000000000 65535 f \n';
+  for(var k=1;k<n;k++) s+=('0000000000'+xref[k]).slice(-10)+' 00000 n \n';
+  put(s+'trailer\n<< /Size '+n+' /Root 1 0 R >>\nstartxref\n'+xo+'\n%%EOF\n');
+  var out=new Uint8Array(off), o=0; parts.forEach(function(b){ out.set(b,o); o+=b.length; }); return out;
+}
+function canvasJpeg(c){ var u=c.toDataURL('image/jpeg',0.92), b=atob(u.split(',')[1]), a=new Uint8Array(b.length); for(var i=0;i<b.length;i++) a[i]=b.charCodeAt(i); return {data:a, w:c.width, h:c.height, url:u}; }
+function buildPdf(){
+  var host=document.getElementById('pdfsrc');
+  host.innerHTML=reportBody();
+  var fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  return fontsReady.then(function(){
+    var root=host.firstElementChild, L=pdfCollect(root), pgs=pdfBreaks(L);
+    var foot='Quản lý BN sau PCI'+(S.pname?' · '+S.pname:'')+(S.pid?' · Mã BN '+S.pid:'')+' · '+fmtDate(Date.now());
+    var jp=pgs.map(function(pg,i){ return canvasJpeg(pdfDrawPage(L,pg,i,pgs.length,foot)); });
+    host.innerHTML='';
+    return {pages:jp, bytes:pdfBytes(jp)};
+  });
+}
+
+var PV=null;
+function pdfName(){ return 'Ket-qua-sau-PCI-'+(S.pid?String(S.pid).replace(/[^A-Za-z0-9_-]/g,'')+'-':'')+fmtDate(Date.now()).replace(/\//g,'-')+'.pdf'; }
+function doPrint(){
+  var pv=document.getElementById('pv'), body=document.getElementById('pvbody'), sv=document.getElementById('pvsave');
+  PV=null; sv.disabled=true; document.getElementById('pvinfo').textContent=''; body.innerHTML='<p class="pvmsg">Đang tạo bản PDF…</p>'; pv.hidden=false;
+  setTimeout(function(){
+    buildPdf().then(function(r){
+      PV=r; sv.disabled=false;
+      document.getElementById('pvinfo').textContent='· '+r.pages.length+' trang A4';
+      body.innerHTML=r.pages.map(function(p,i){ return '<img alt="Trang '+(i+1)+'" src="'+p.url+'">'; }).join('');
+    }).catch(function(err){ body.innerHTML='<p class="pvmsg">Không tạo được PDF: '+esc(String(err&&err.message||err))+'</p>'; });
+  }, 30);
+}
+function savePdf(){
+  if(!PV) return;
+  getDL().then(function(dl){
+    if(dl){
+      dl.save({filename:pdfName(), data:new Blob([PV.bytes],{type:'application/pdf'})}).then(function(){ toast('Đã lưu file PDF'); document.getElementById('pv').hidden=true; }, function(err){ if(err && err.code==='declined') return; toast('Không lưu được PDF trong khung này'); });
+    } else {
+      try{ var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([PV.bytes],{type:'application/pdf'})); a.download=pdfName(); document.body.appendChild(a); a.click(); a.remove(); toast('Đã tải file PDF'); }catch(e){ toast('Không lưu được PDF trong khung này'); }
+    }
+  });
+}
+document.getElementById('pvclose').addEventListener('click', function(){ document.getElementById('pv').hidden=true; });
+document.getElementById('pvsave').addEventListener('click', savePdf);
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') document.getElementById('pv').hidden=true; });
+function toast(t){ var el=document.getElementById('toast'); el.textContent=t; el.classList.add('show'); setTimeout(function(){el.classList.remove('show');},1800); }
+
+/* ---------- events ---------- */
+function full(){ var d=derive(S); buildRail(d); render(); }
+document.getElementById('rail').addEventListener('click', function(e){
+  var b=e.target.closest('.chip'); if(!b) return;
+  var k=b.dataset.k, t=b.dataset.t, v=b.dataset.v;
+  S.demo=false;
+  if(t==='one'){ S[k]=v; if(k==='phase') S.pciDate=''; }
+  else if(t==='multi'){ var a=(S[k]||[]).slice(); var i=a.indexOf(v); if(i>=0) a.splice(i,1); else a.push(v); S[k]=a; }
+  else if(t==='bool'){ S[k]=!S[k]; }
+  var rail=document.getElementById('rail'), y=rail.scrollTop, wy=window.scrollY;
+  buildRail(derive(S)); rail.scrollTop=y; window.scrollTo(0,wy);
+  var again=rail.querySelector('.chip[data-k="'+k+'"]'+(v?'[data-v="'+v+'"]':'')); if(again) again.focus({preventScroll:true});
+  render();
+});
+document.getElementById('rail').addEventListener('input', function(e){
+  var el=e.target; if(!el.dataset || !el.dataset.k) return;
+  S[el.dataset.k]=el.value; S.demo=false;
+  if(el.dataset.k==='pciDate'){ var m=monthsSince(el.value); if(m!==null){ S.phase=phaseFromMonths(m); var y=document.getElementById('rail').scrollTop; buildRail(derive(S)); document.getElementById('rail').scrollTop=y; } }
+  render();
+});
+document.getElementById('rail').addEventListener('change', function(e){
+  var el=e.target; if(el.tagName==='SELECT' && el.dataset.k){ S[el.dataset.k]=el.value; render(); }
+});
+document.getElementById('rail').addEventListener('toggle', function(e){
+  var dt=e.target; if(!dt.dataset || !dt.dataset.sec) return;
+  try{ var o=JSON.parse(localStorage.getItem(KEY+'-open')||'{}'); o[dt.dataset.sec]=dt.open; localStorage.setItem(KEY+'-open', JSON.stringify(o)); }catch(err){}
+}, true);
+document.getElementById('board').addEventListener('click', function(e){
+  var b=e.target.closest('.tab'); if(!b) return; UI.tab=b.dataset.tab; render();
+  var nt=document.getElementById('tab_'+UI.tab); if(nt) nt.focus();
+});
+document.getElementById('reset').addEventListener('click', function(){ S=JSON.parse(JSON.stringify(EMPTY)); full(); toast('Đã làm mới dữ liệu'); });
+document.getElementById('print').addEventListener('click', doPrint);
+full();
+})();
+</script>
+</body>
+</html>
